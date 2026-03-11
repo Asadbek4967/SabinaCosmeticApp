@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Sabina Cosmetic Application</string>
+
+    <string name="home_search_placeholder">Mahsulot yoki brend qidiring</string>
+    <string name="home_banner">Banner</string>
+    <string name="home_info_title">Diqqat</string>
+    <string name="home_info_desc">Banner bosilganda chegirma va kuponlarni tekshirish mumkin</string>
+    <string name="home_section_title">Bu mahsulotni otkazib yubormang</string>
+
+    <string name="home_more">Koproq</string>
+
+    <string name="home_quick_recommended">Tavsiya</string>
+    <string name="home_quick_free_shipping">Bepul yetkazish</string>
+    <string name="home_quick_rocket">Tez yetkazish</string>
+    <string name="home_quick_new">Yangilik</string>
+    <string name="home_quick_discount">Chegirma</string>
+    <string name="home_quick_best">Top</string>
+    <string name="home_quick_lux">Premium</string>
+    <string name="home_quick_delivery">Yetkazish</string>
+</resources>
