@@ -11,8 +11,11 @@ class CartRepository {
     val cartItems: StateFlow<List<CartItemUi>> = _cartItems.asStateFlow()
 
     fun addToCart(product: Product) {
+        val cartProduct = product.toCartProduct()
         val currentItems = _cartItems.value.toMutableList()
-        val existingIndex = currentItems.indexOfFirst { it.product.id == product.id }
+        val existingIndex = currentItems.indexOfFirst { item ->
+            item.product.id == cartProduct.id
+        }
 
         if (existingIndex >= 0) {
             val existingItem = currentItems[existingIndex]
@@ -22,7 +25,7 @@ class CartRepository {
         } else {
             currentItems.add(
                 CartItemUi(
-                    product = product,
+                    product = cartProduct,
                     quantity = 1
                 )
             )
@@ -33,7 +36,11 @@ class CartRepository {
 
     fun increaseQuantity(productId: String) {
         _cartItems.value = _cartItems.value.map { item ->
-            if (item.product.id == productId) item.copy(quantity = item.quantity + 1) else item
+            if (item.product.id == productId) {
+                item.copy(quantity = item.quantity + 1)
+            } else {
+                item
+            }
         }
     }
 
@@ -41,7 +48,11 @@ class CartRepository {
         _cartItems.value = _cartItems.value.mapNotNull { item ->
             if (item.product.id == productId) {
                 val newQuantity = item.quantity - 1
-                if (newQuantity <= 0) null else item.copy(quantity = newQuantity)
+                if (newQuantity <= 0) {
+                    null
+                } else {
+                    item.copy(quantity = newQuantity)
+                }
             } else {
                 item
             }
@@ -49,6 +60,24 @@ class CartRepository {
     }
 
     fun removeFromCart(productId: String) {
-        _cartItems.value = _cartItems.value.filterNot { it.product.id == productId }
+        _cartItems.value = _cartItems.value.filterNot { item ->
+            item.product.id == productId
+        }
     }
+
+    fun clearCart() {
+        _cartItems.value = emptyList()
+    }
+}
+
+private fun Product.toCartProduct(): CartProduct {
+    return CartProduct(
+        id = id,
+        title = title,
+        brand = brand,
+        category = category,
+        price = price,
+        priceValue = priceValue,
+        imageUrl = imageUrl
+    )
 }

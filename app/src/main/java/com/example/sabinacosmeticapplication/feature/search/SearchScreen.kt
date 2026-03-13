@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,11 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -38,51 +42,93 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.example.sabinacosmeticapplication.data.model.Product
+import com.example.sabinacosmeticapplication.ui.theme.BorderSoft
+import com.example.sabinacosmeticapplication.ui.theme.FlashSaleColor
+import com.example.sabinacosmeticapplication.ui.theme.SearchBackground
+import com.example.sabinacosmeticapplication.ui.theme.SearchHintText
+import com.example.sabinacosmeticapplication.ui.theme.SearchSecondaryText
+import com.example.sabinacosmeticapplication.ui.theme.SurfaceWhite
+import com.example.sabinacosmeticapplication.ui.theme.TextPrimary
 
-private val SearchScreenBackground = Color(0xFFF7F8FC)
-private val SearchCardBackground = Color(0xFFFFFFFF)
 private val SearchAccent = Color(0xFF4D6BFE)
-private val SearchPrimaryText = Color(0xFF1F2430)
-private val SearchSecondaryText = Color(0xFF7B8190)
-private val SearchBorder = Color(0xFFE4E9F2)
 private val SearchImageBackground = Color(0xFFF1F4FB)
+private val SearchChipBackground = Color(0xFFF3F6FB)
 
 private val BestSellerBackground = Color(0xFFFFF1E8)
 private val BestSellerText = Color(0xFFFF7A00)
 
 private val FlashSaleBackground = Color(0xFFFFEEF1)
-private val FlashSaleText = Color(0xFFFF4D6D)
 
 @Composable
 fun SearchScreen(
-    padding: PaddingValues,
-    onProductClick: (String) -> Unit = {},
-    viewModel: SearchViewModel = viewModel()
+    uiState: SearchUiState,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    onClearQuery: () -> Unit,
+    onPopularKeywordClick: (String) -> Unit,
+    onRemoveRecentSearch: (String) -> Unit,
+    onProductClick: (String) -> Unit,
+    padding: PaddingValues = PaddingValues(0.dp)
 ) {
-    val uiState = viewModel.uiState
-    val resultText = if (uiState.results.size == 1) {
-        "1 result found"
-    } else {
-        "${uiState.results.size} results found"
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(SearchScreenBackground)
+            .background(SearchBackground)
             .padding(padding)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
+        SearchHeader()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SearchInputBar(
+            query = uiState.query,
+            onQueryChange = onQueryChange,
+            onClearQuery = onClearQuery
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when {
+            uiState.isLoading -> {
+                SearchLoadingState()
+            }
+
+            uiState.query.isBlank() -> {
+                SearchDiscoveryContent(
+                    recentSearches = uiState.recentSearches,
+                    popularKeywords = uiState.popularKeywords,
+                    onRecentSearchClick = onSearch,
+                    onRemoveRecentSearch = onRemoveRecentSearch,
+                    onPopularKeywordClick = onPopularKeywordClick
+                )
+            }
+
+            uiState.results.isNotEmpty() -> {
+                SearchResultContent(
+                    results = uiState.results,
+                    onProductClick = onProductClick
+                )
+            }
+
+            else -> {
+                SearchEmptyState(query = uiState.query)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchHeader() {
+    Column {
         Text(
             text = "Search",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = SearchPrimaryText
+            color = TextPrimary
         )
 
         Text(
@@ -91,67 +137,246 @@ fun SearchScreen(
             color = SearchSecondaryText,
             modifier = Modifier.padding(top = 4.dp)
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.query,
-            onValueChange = viewModel::onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text(
-                    text = "Search products, brand, category",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SearchSecondaryText
-                )
-            },
-            textStyle = MaterialTheme.typography.bodyMedium.copy(
-                color = SearchPrimaryText
-            ),
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Outlined.Search,
-                    contentDescription = null,
-                    tint = SearchSecondaryText
-                )
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(20.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White,
-                focusedBorderColor = SearchAccent,
-                unfocusedBorderColor = SearchBorder,
-                cursorColor = SearchAccent
+@Composable
+private fun SearchInputBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onClearQuery: () -> Unit
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = {
+            Text(
+                text = "Search skincare, serum, cream...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = SearchHintText
             )
+        },
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
+            color = TextPrimary
+        ),
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+                tint = SearchSecondaryText
+            )
+        },
+        trailingIcon = {
+            if (query.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF0F2F5))
+                        .clickable { onClearQuery() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear search",
+                        tint = SearchSecondaryText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(20.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = SurfaceWhite,
+            unfocusedContainerColor = SurfaceWhite,
+            disabledContainerColor = SurfaceWhite,
+            focusedBorderColor = SearchAccent,
+            unfocusedBorderColor = BorderSoft,
+            cursorColor = SearchAccent
+        )
+    )
+}
+
+@Composable
+private fun SearchDiscoveryContent(
+    recentSearches: List<String>,
+    popularKeywords: List<String>,
+    onRecentSearchClick: (String) -> Unit,
+    onRemoveRecentSearch: (String) -> Unit,
+    onPopularKeywordClick: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(bottom = 24.dp)
+    ) {
+        if (recentSearches.isNotEmpty()) {
+            item {
+                SectionTitle(
+                    title = "Recent Searches",
+                    subtitle = "Your recently searched keywords"
+                )
+            }
+
+            item {
+                RecentSearchSection(
+                    recentSearches = recentSearches,
+                    onRecentSearchClick = onRecentSearchClick,
+                    onRemoveRecentSearch = onRemoveRecentSearch
+                )
+            }
+        }
+
+        item {
+            SectionTitle(
+                title = "Popular Keywords",
+                subtitle = "Trending categories you may like"
+            )
+        }
+
+        item {
+            PopularKeywordSection(
+                keywords = popularKeywords,
+                onKeywordClick = onPopularKeywordClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchResultContent(
+    results: List<Product>,
+    onProductClick: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(bottom = 24.dp)
+    ) {
+        item {
+            Text(
+                text = if (results.size == 1) "1 result found" else "${results.size} results found",
+                style = MaterialTheme.typography.bodyMedium,
+                color = SearchSecondaryText,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        items(
+            items = results,
+            key = { it.id }
+        ) { product ->
+            SearchProductItem(
+                product = product,
+                onClick = { onProductClick(product.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(
+    title: String,
+    subtitle: String
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
         )
 
         Text(
-            text = resultText,
-            modifier = Modifier.padding(top = 16.dp, bottom = 14.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = SearchSecondaryText,
-            fontWeight = FontWeight.Medium
+            text = subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = SearchSecondaryText
         )
+    }
+}
 
-        if (uiState.results.isEmpty()) {
-            SearchEmptyState(query = uiState.query)
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+@Composable
+private fun RecentSearchSection(
+    recentSearches: List<String>,
+    onRecentSearchClick: (String) -> Unit,
+    onRemoveRecentSearch: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        recentSearches.forEach { keyword ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                items(
-                    items = uiState.results,
-                    key = { it.id }
-                ) { product ->
-                    SearchProductItem(
-                        product = product,
-                        onClick = { onProductClick(product.id) }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onRecentSearchClick(keyword) }
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = null,
+                        tint = SearchSecondaryText,
+                        modifier = Modifier.size(18.dp)
                     )
+
+                    Text(
+                        text = keyword,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 10.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFF3F4F6))
+                            .clickable { onRemoveRecentSearch(keyword) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Remove recent search",
+                            tint = SearchSecondaryText,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PopularKeywordSection(
+    keywords: List<String>,
+    onKeywordClick: (String) -> Unit
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        keywords.forEach { keyword ->
+            Surface(
+                modifier = Modifier.clickable { onKeywordClick(keyword) },
+                shape = RoundedCornerShape(50),
+                color = SearchChipBackground
+            ) {
+                Text(
+                    text = keyword,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -167,7 +392,7 @@ private fun SearchProductItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = SearchCardBackground),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
@@ -177,7 +402,7 @@ private fun SearchProductItem(
         ) {
             Box(
                 modifier = Modifier
-                    .size(110.dp)
+                    .size(112.dp)
                     .clip(RoundedCornerShape(18.dp))
                     .background(SearchImageBackground),
                 contentAlignment = Alignment.Center
@@ -211,7 +436,7 @@ private fun SearchProductItem(
                         ProductBadge(
                             text = "Flash Sale",
                             containerColor = FlashSaleBackground,
-                            textColor = FlashSaleText
+                            textColor = FlashSaleColor
                         )
                     }
                 }
@@ -220,7 +445,7 @@ private fun SearchProductItem(
                     text = product.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = SearchPrimaryText,
+                    color = TextPrimary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -266,7 +491,7 @@ private fun SearchProductItem(
                             Text(
                                 text = "${product.discountPercent}% OFF",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = FlashSaleText,
+                                color = FlashSaleColor,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -321,6 +546,16 @@ private fun SearchImageFallback(product: Product) {
 }
 
 @Composable
+private fun SearchLoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = SearchAccent)
+    }
+}
+
+@Composable
 private fun SearchEmptyState(query: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -338,24 +573,16 @@ private fun SearchEmptyState(query: String) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = if (query.isBlank()) {
-                    "Search for your favorite skincare"
-                } else {
-                    "No results for \"$query\""
-                },
+                text = "No results for \"$query\"",
                 style = MaterialTheme.typography.titleMedium,
-                color = SearchPrimaryText,
+                color = TextPrimary,
                 fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = if (query.isBlank()) {
-                    "Try searching serum, toner, cream, lip care..."
-                } else {
-                    "Try another product name, brand, or category"
-                },
+                text = "Try another product name, brand, or category",
                 style = MaterialTheme.typography.bodyMedium,
                 color = SearchSecondaryText
             )

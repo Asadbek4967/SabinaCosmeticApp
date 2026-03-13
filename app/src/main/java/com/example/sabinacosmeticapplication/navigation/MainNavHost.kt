@@ -28,7 +28,10 @@ import com.example.sabinacosmeticapplication.feature.categories.CategoriesScreen
 import com.example.sabinacosmeticapplication.feature.home.HomeRoute
 import com.example.sabinacosmeticapplication.feature.my.MyScreen
 import com.example.sabinacosmeticapplication.feature.productdetail.ProductDetailRoute
-import com.example.sabinacosmeticapplication.feature.search.SearchScreen
+import com.example.sabinacosmeticapplication.feature.search.SearchRoute
+
+private const val PRODUCT_DETAIL_ROUTE = "product_detail"
+private const val PRODUCT_ID_ARG = "productId"
 
 private fun NavHostController.navigateToBottomRoute(route: String) {
     navigate(route) {
@@ -38,6 +41,10 @@ private fun NavHostController.navigateToBottomRoute(route: String) {
         launchSingleTop = true
         restoreState = true
     }
+}
+
+private fun NavHostController.navigateToProductDetail(productId: String) {
+    navigate("$PRODUCT_DETAIL_ROUTE/$productId")
 }
 
 @Composable
@@ -57,8 +64,8 @@ fun MainNavHost() {
                 val currentDestination = navBackStackEntry?.destination
 
                 bottomItems.forEach { item ->
-                    val selected = currentDestination?.hierarchy?.any {
-                        it.route == item.route
+                    val selected = currentDestination?.hierarchy?.any { destination ->
+                        destination.route == item.route
                     } == true
 
                     NavigationBarItem(
@@ -71,7 +78,9 @@ fun MainNavHost() {
                                 BadgedBox(
                                     badge = {
                                         Badge {
-                                            Text(text = cartItemCount.toString())
+                                            Text(
+                                                text = if (cartItemCount > 99) "99+" else cartItemCount.toString()
+                                            )
                                         }
                                     }
                                 ) {
@@ -113,7 +122,7 @@ fun MainNavHost() {
                         navController.navigateToBottomRoute(BottomRoute.Search.route)
                     },
                     onProductClick = { productId ->
-                        navController.navigate("product_detail/$productId")
+                        navController.navigateToProductDetail(productId)
                     }
                 )
             }
@@ -123,16 +132,19 @@ fun MainNavHost() {
             }
 
             composable(BottomRoute.Search.route) {
-                SearchScreen(
+                SearchRoute(
                     padding = innerPadding,
                     onProductClick = { productId ->
-                        navController.navigate("product_detail/$productId")
+                        navController.navigateToProductDetail(productId)
                     }
                 )
             }
 
             composable(BottomRoute.Cart.route) {
-                CartScreen(padding = innerPadding)
+                CartScreen(
+                    padding = innerPadding,
+                    viewModel = cartViewModel
+                )
             }
 
             composable(BottomRoute.My.route) {
@@ -140,9 +152,9 @@ fun MainNavHost() {
             }
 
             composable(
-                route = "product_detail/{productId}",
+                route = "$PRODUCT_DETAIL_ROUTE/{$PRODUCT_ID_ARG}",
                 arguments = listOf(
-                    navArgument("productId") {
+                    navArgument(PRODUCT_ID_ARG) {
                         type = NavType.StringType
                     }
                 )

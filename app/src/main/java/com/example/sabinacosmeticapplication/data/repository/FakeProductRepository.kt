@@ -146,12 +146,15 @@ class FakeProductRepository : ProductRepository {
     override fun getAllProducts(): List<Product> = products
 
     override fun searchProducts(query: String): List<Product> {
-        if (query.isBlank()) return products
+        val normalizedQuery = query.trim()
 
-        return products.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                    it.brand.contains(query, ignoreCase = true) ||
-                    it.category.contains(query, ignoreCase = true)
+        if (normalizedQuery.isBlank()) return emptyList()
+
+        return products.filter { product ->
+            product.title.contains(normalizedQuery, ignoreCase = true) ||
+                    product.brand.contains(normalizedQuery, ignoreCase = true) ||
+                    product.category.contains(normalizedQuery, ignoreCase = true) ||
+                    product.description.contains(normalizedQuery, ignoreCase = true)
         }
     }
 
