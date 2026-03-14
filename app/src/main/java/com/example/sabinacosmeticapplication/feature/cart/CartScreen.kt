@@ -46,22 +46,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
+import com.example.sabinacosmeticapplication.R
+import com.example.sabinacosmeticapplication.ui.theme.CartBackground
+import com.example.sabinacosmeticapplication.ui.theme.CartBorder
+import com.example.sabinacosmeticapplication.ui.theme.CartDanger
+import com.example.sabinacosmeticapplication.ui.theme.CartDialogContainer
+import com.example.sabinacosmeticapplication.ui.theme.CartDialogText
+import com.example.sabinacosmeticapplication.ui.theme.CartMutedText
+import com.example.sabinacosmeticapplication.ui.theme.CartPrimary
+import com.example.sabinacosmeticapplication.ui.theme.CartSummaryBg
+import com.example.sabinacosmeticapplication.ui.theme.CartSurface
+import com.example.sabinacosmeticapplication.ui.theme.CartTitle
 
-private val CartBackground = Color(0xFFF6F7FB)
-private val CartPrimary = Color(0xFF4D6BFE)
-private val CartMutedText = Color(0xFF7E8794)
-private val CartDanger = Color(0xFFE53935)
-private val CartSurface = Color.White
-private val CartSummaryBg = Color(0xFFFFF7FA)
-private val CartBorder = Color(0xFFE3E8F2)
-private val CartTitle = Color(0xFF1B1F26)
-private val CartDialogContainer = Color.White
-private val CartDialogText = Color(0xFF5F6B7A)
+private val CartCardShape = RoundedCornerShape(20.dp)
+private val CartDialogShape = RoundedCornerShape(24.dp)
+private val CartImageShape = RoundedCornerShape(16.dp)
+private val CartButtonShape = RoundedCornerShape(18.dp)
+private val CartSmallButtonShape = RoundedCornerShape(14.dp)
+private val CartQuantityShape = RoundedCornerShape(999.dp)
+
+private val CartImageFallbackBackground = Color(0xFFEFF3FF)
+private val CartEmptyIconBackground = Color(0xFFEAF3FF)
+private val CartSummaryDivider = Color(0xFFE8DDE4)
 
 @Composable
 fun CartScreen(
@@ -75,20 +87,29 @@ fun CartScreen(
     var showClearAllDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val subtotal = cartItems.sumOf { it.product.priceValue * it.quantity }
-    val deliveryFee = if (cartItems.isEmpty() || subtotal >= 50_000) 0 else 3_000
+    val removedMessage = stringResource(R.string.cart_item_removed)
+    val undoLabel = stringResource(R.string.cart_undo)
+
+    val subtotal = remember(cartItems) {
+        cartItems.sumOf { item -> item.product.priceValue * item.quantity }
+    }
+    val deliveryFee = remember(cartItems, subtotal) {
+        if (cartItems.isEmpty() || subtotal >= FREE_DELIVERY_THRESHOLD) 0 else DELIVERY_FEE
+    }
     val discount = 0
-    val total = subtotal + deliveryFee - discount
+    val total = remember(subtotal, deliveryFee, discount) {
+        subtotal + deliveryFee - discount
+    }
 
     LaunchedEffect(lastRemovedItem) {
         if (lastRemovedItem != null) {
-            val result = snackbarHostState.showSnackbar(
-                message = "Item removed",
-                actionLabel = "UNDO",
-                duration = SnackbarDuration.Short
-            )
-
-            when (result) {
+            when (
+                snackbarHostState.showSnackbar(
+                    message = removedMessage,
+                    actionLabel = undoLabel,
+                    duration = SnackbarDuration.Short
+                )
+            ) {
                 SnackbarResult.ActionPerformed -> viewModel.undoRemove()
                 SnackbarResult.Dismissed -> viewModel.clearLastRemovedItem()
             }
@@ -110,56 +131,24 @@ fun CartScreen(
             if (cartItems.isEmpty()) {
                 EmptyCartState(padding = padding)
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .navigationBarsPadding()
-                ) {
-                    CartHeader(
-                        itemCount = cartItemCount,
-                        onClearAll = {
-                            showClearAllDialog = true
-                        }
-                    )
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = cartItems,
-                            key = { item -> item.product.id }
-                        ) { item ->
-                            CartItemCard(
-                                item = item,
-                                onDecrease = { viewModel.decreaseQuantity(item.product.id) },
-                                onIncrease = { viewModel.increaseQuantity(item.product.id) },
-                                onRemove = { viewModel.removeFromCart(item.product.id) }
-                            )
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-
-                    CartSummarySection(
-                        subtotal = subtotal,
-                        deliveryFee = deliveryFee,
-                        discount = discount,
-                        total = total
-                    )
-                }
+                CartContent(
+                    padding = padding,
+                    itemCount = cartItemCount,
+                    items = cartItems,
+                    subtotal = subtotal,
+                    deliveryFee = deliveryFee,
+                    discount = discount,
+                    total = total,
+                    onClearAllClick = { showClearAllDialog = true },
+                    onDecrease = { productId -> viewModel.decreaseQuantity(productId) },
+                    onIncrease = { productId -> viewModel.increaseQuantity(productId) },
+                    onRemove = { productId -> viewModel.removeFromCart(productId) }
+                )
             }
 
             if (showClearAllDialog) {
                 ClearCartConfirmDialog(
-                    onDismiss = {
-                        showClearAllDialog = false
-                    },
+                    onDismiss = { showClearAllDialog = false },
                     onConfirm = {
                         showClearAllDialog = false
                         viewModel.clearCart()
@@ -167,6 +156,63 @@ fun CartScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun CartContent(
+    padding: PaddingValues,
+    itemCount: Int,
+    items: List<CartItemUi>,
+    subtotal: Int,
+    deliveryFee: Int,
+    discount: Int,
+    total: Int,
+    onClearAllClick: () -> Unit,
+    onDecrease: (String) -> Unit,
+    onIncrease: (String) -> Unit,
+    onRemove: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .navigationBarsPadding()
+    ) {
+        CartHeader(
+            itemCount = itemCount,
+            onClearAll = onClearAllClick
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(
+                items = items,
+                key = { item -> item.product.id }
+            ) { item ->
+                CartItemCard(
+                    item = item,
+                    onDecrease = { onDecrease(item.product.id) },
+                    onIncrease = { onIncrease(item.product.id) },
+                    onRemove = { onRemove(item.product.id) }
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        CartSummarySection(
+            subtotal = subtotal,
+            deliveryFee = deliveryFee,
+            discount = discount,
+            total = total
+        )
     }
 }
 
@@ -184,7 +230,7 @@ private fun CartHeader(
     ) {
         Column {
             Text(
-                text = "My cart",
+                text = stringResource(R.string.cart_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = CartTitle
@@ -193,7 +239,11 @@ private fun CartHeader(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "$itemCount item${if (itemCount > 1) "s" else ""}",
+                text = if (itemCount == 1) {
+                    stringResource(R.string.cart_item_single, itemCount)
+                } else {
+                    stringResource(R.string.cart_item_plural, itemCount)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = CartMutedText
             )
@@ -201,7 +251,7 @@ private fun CartHeader(
 
         TextButton(onClick = onClearAll) {
             Text(
-                text = "Clear all",
+                text = stringResource(R.string.cart_clear_all),
                 color = CartDanger,
                 fontWeight = FontWeight.SemiBold
             )
@@ -217,10 +267,10 @@ private fun ClearCartConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = CartDialogContainer,
-        shape = RoundedCornerShape(24.dp),
+        shape = CartDialogShape,
         title = {
             Text(
-                text = "Clear cart",
+                text = stringResource(R.string.cart_clear_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = CartTitle
@@ -228,7 +278,7 @@ private fun ClearCartConfirmDialog(
         },
         text = {
             Text(
-                text = "Are you sure you want to remove all items from your cart? This action cannot be undone.",
+                text = stringResource(R.string.cart_clear_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = CartDialogText
             )
@@ -236,7 +286,7 @@ private fun ClearCartConfirmDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Cancel",
+                    text = stringResource(R.string.cart_cancel),
                     fontWeight = FontWeight.SemiBold,
                     color = CartMutedText
                 )
@@ -245,10 +295,10 @@ private fun ClearCartConfirmDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                shape = RoundedCornerShape(14.dp)
+                shape = CartSmallButtonShape
             ) {
                 Text(
-                    text = "Clear",
+                    text = stringResource(R.string.cart_clear_confirm),
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -275,7 +325,7 @@ private fun EmptyCartState(
             Surface(
                 modifier = Modifier.size(80.dp),
                 shape = CircleShape,
-                color = Color(0xFFEAF3FF)
+                color = CartEmptyIconBackground
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -288,7 +338,7 @@ private fun EmptyCartState(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Your cart is empty",
+                text = stringResource(R.string.cart_empty_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = CartTitle
@@ -297,7 +347,7 @@ private fun EmptyCartState(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Add products from Home or Search to see them here.",
+                text = stringResource(R.string.cart_empty_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = CartMutedText
             )
@@ -314,7 +364,7 @@ private fun CartItemCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = CartCardShape,
         colors = CardDefaults.cardColors(containerColor = CartSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -326,8 +376,8 @@ private fun CartItemCard(
                 modifier = Modifier
                     .size(92.dp)
                     .background(
-                        color = Color(0xFFEFF3FF),
-                        shape = RoundedCornerShape(16.dp)
+                        color = CartImageFallbackBackground,
+                        shape = CartImageShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -387,7 +437,7 @@ private fun CartItemCard(
                     IconButton(onClick = onRemove) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Remove from cart",
+                            contentDescription = stringResource(R.string.cart_remove_from_cart),
                             tint = CartDanger
                         )
                     }
@@ -407,14 +457,14 @@ private fun QuantityControl(
     val isSingleItem = quantity == 1
 
     Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.White,
+        shape = CartQuantityShape,
+        color = CartSurface,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         modifier = Modifier.border(
             width = 1.dp,
             color = CartBorder,
-            shape = RoundedCornerShape(999.dp)
+            shape = CartQuantityShape
         )
     ) {
         Row(
@@ -429,7 +479,7 @@ private fun QuantityControl(
                 if (isSingleItem) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Remove item",
+                        contentDescription = stringResource(R.string.cart_remove_item),
                         tint = CartDanger,
                         modifier = Modifier.size(18.dp)
                     )
@@ -479,32 +529,36 @@ private fun CartSummarySection(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             SummaryRow(
-                label = "Subtotal",
+                label = stringResource(R.string.cart_subtotal),
                 value = formatWon(subtotal)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             SummaryRow(
-                label = "Delivery fee",
-                value = if (deliveryFee == 0) "Free" else formatWon(deliveryFee)
+                label = stringResource(R.string.cart_delivery_fee),
+                value = if (deliveryFee == 0) {
+                    stringResource(R.string.cart_delivery_free)
+                } else {
+                    formatWon(deliveryFee)
+                }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             SummaryRow(
-                label = "Discount",
+                label = stringResource(R.string.cart_discount),
                 value = if (discount == 0) formatWon(0) else "-${formatWon(discount)}"
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Divider(color = Color(0xFFE8DDE4))
+            Divider(color = CartSummaryDivider)
 
             Spacer(modifier = Modifier.height(14.dp))
 
             SummaryRow(
-                label = "Total",
+                label = stringResource(R.string.cart_total),
                 value = formatWon(total),
                 isTotal = true
             )
@@ -514,10 +568,10 @@ private fun CartSummarySection(
             Button(
                 onClick = { },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp)
+                shape = CartButtonShape
             ) {
                 Text(
-                    text = "Checkout • ${formatWon(total)}",
+                    text = stringResource(R.string.cart_checkout, formatWon(total)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -565,7 +619,7 @@ private fun CartImageFallback(category: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFEFF3FF)),
+            .background(CartImageFallbackBackground),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -587,3 +641,6 @@ private fun CartImageFallback(category: String) {
 private fun formatWon(value: Int): String {
     return "₩${"%,d".format(value)}"
 }
+
+private const val FREE_DELIVERY_THRESHOLD = 50_000
+private const val DELIVERY_FEE = 3_000

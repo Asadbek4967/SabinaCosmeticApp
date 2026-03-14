@@ -1,0 +1,126 @@
+# Sabina Cosmetic App
+
+Sabina Cosmetic App is an Android beauty shopping application built using **Kotlin** and **Jetpack Compose**.
+
+The application allows users to browse Korean cosmetic products, search products, view detailed product information, and manage a persistent shopping cart with a modern and responsive UI.
+
+This project is being developed as a **modern Android architecture practice project**, focusing on real-world e-commerce app structure.
+
+---
+
+# Features
+
+## Product Browsing
+- Browse Korean cosmetic products
+- Flash sale section
+- Category browsing
+- Promotional banner slider
+
+## Product Detail
+- Product image preview
+- Brand and category information
+- Discount price calculation
+- Product rating and review count
+- Add to cart button
+
+## Search System
+- Product search by keyword
+- Recent search suggestions
+- Popular keyword suggestions
+- Live search results
+
+## Cart System
+- Add product to cart
+- Increase / decrease quantity
+- Remove individual item
+- Clear all cart items
+- Subtotal and total calculation
+- Checkout section UI
+- Cart badge synchronization
+- Empty cart state
+
+## Persistent Cart (Room Database)
+- Cart items are stored locally using **Room**
+- Cart state persists even after app restart
+- Database-backed cart system
+
+---
+
+# Architecture
+
+The project follows **MVVM architecture** with clear separation of concerns.
+
+UI Layer
+Jetpack Compose screens and state observation
+
+ViewModel Layer
+Handles UI state and business logic
+
+Repository Layer
+Manages data flow between UI and database
+
+Data Layer
+Room Database for persistent cart storage
+
+---
+
+# Tech Stack
+
+- Kotlin
+- Jetpack Compose
+- Material 3
+- MVVM Architecture
+- StateFlow / Flow
+- Navigation Compose
+- Room Database
+- Repository Pattern
+
+---
+
+# Project Structure
+
+
+
+
+---
+
+# Screens
+
+- Home Screen
+- Search Screen
+- Product Detail Screen
+- Cart Screen
+- Categories Screen
+- My Page Screen
+
+---
+
+# Current Development Progress
+
+✔ Home screen UI
+✔ Product list and categories
+✔ Product detail screen
+✔ Search system
+✔ Cart system
+✔ Cart badge synchronization
+✔ Quantity controls
+✔ Clear cart dialog
+✔ Empty cart UI
+✔ Room database persistence for cart
+
+---
+
+# Author
+
+**Asadbek Matyaqubov**
+
+Android Developer
+
+
+## Future Improvements
+
+- Remote API integration
+- Authentication
+- Payment integration
+- Product reviews
+- Wishlist system

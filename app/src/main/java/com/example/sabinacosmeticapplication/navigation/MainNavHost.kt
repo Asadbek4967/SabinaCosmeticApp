@@ -10,7 +10,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -22,8 +24,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.room.Room
+import com.example.sabinacosmeticapplication.data.local.cart.AppDatabase
+import com.example.sabinacosmeticapplication.data.repository.FakeProductRepository
+import com.example.sabinacosmeticapplication.feature.cart.CartRepository
 import com.example.sabinacosmeticapplication.feature.cart.CartScreen
 import com.example.sabinacosmeticapplication.feature.cart.CartViewModel
+import com.example.sabinacosmeticapplication.feature.cart.CartViewModelFactory
 import com.example.sabinacosmeticapplication.feature.categories.CategoriesScreen
 import com.example.sabinacosmeticapplication.feature.home.HomeRoute
 import com.example.sabinacosmeticapplication.feature.my.MyScreen
@@ -50,8 +57,29 @@ private fun NavHostController.navigateToProductDetail(productId: String) {
 @Composable
 fun MainNavHost() {
     val navController = rememberNavController()
+    val context = LocalContext.current
 
-    val cartViewModel: CartViewModel = viewModel()
+    val database = remember {
+        Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            "sabina_cosmetic_db"
+        ).build()
+    }
+
+    val productRepository = remember { FakeProductRepository() }
+
+    val cartRepository = remember {
+        CartRepository(
+            cartDao = database.cartDao(),
+            productRepository = productRepository
+        )
+    }
+
+    val cartViewModel: CartViewModel = viewModel(
+        factory = CartViewModelFactory(cartRepository)
+    )
+
     val cartItemCount by cartViewModel.cartItemCount.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -163,7 +191,8 @@ fun MainNavHost() {
                     padding = innerPadding,
                     onBackClick = {
                         navController.popBackStack()
-                    }
+                    },
+                    cartViewModel = cartViewModel
                 )
             }
         }

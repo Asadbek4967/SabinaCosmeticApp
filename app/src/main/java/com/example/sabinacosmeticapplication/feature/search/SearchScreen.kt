@@ -55,11 +55,19 @@ import com.example.sabinacosmeticapplication.ui.theme.TextPrimary
 private val SearchAccent = Color(0xFF4D6BFE)
 private val SearchImageBackground = Color(0xFFF1F4FB)
 private val SearchChipBackground = Color(0xFFF3F6FB)
+private val SearchClearButtonBackground = Color(0xFFF0F2F5)
+private val RecentRemoveBackground = Color(0xFFF3F4F6)
 
 private val BestSellerBackground = Color(0xFFFFF1E8)
 private val BestSellerText = Color(0xFFFF7A00)
 
 private val FlashSaleBackground = Color(0xFFFFEEF1)
+
+private val SearchFieldShape = RoundedCornerShape(20.dp)
+private val SearchCardShape = RoundedCornerShape(24.dp)
+private val SearchRecentCardShape = RoundedCornerShape(18.dp)
+private val SearchImageShape = RoundedCornerShape(18.dp)
+private val SearchChipShape = RoundedCornerShape(50)
 
 @Composable
 fun SearchScreen(
@@ -82,11 +90,13 @@ fun SearchScreen(
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         SearchHeader()
+
         Spacer(modifier = Modifier.height(16.dp))
 
         SearchInputBar(
             query = uiState.query,
             onQueryChange = onQueryChange,
+            onSearch = onSearch,
             onClearQuery = onClearQuery
         )
 
@@ -144,11 +154,15 @@ private fun SearchHeader() {
 private fun SearchInputBar(
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
     onClearQuery: () -> Unit
 ) {
     OutlinedTextField(
         value = query,
-        onValueChange = onQueryChange,
+        onValueChange = { value ->
+            onQueryChange(value)
+            onSearch(value)
+        },
         modifier = Modifier.fillMaxWidth(),
         placeholder = {
             Text(
@@ -173,7 +187,7 @@ private fun SearchInputBar(
                     modifier = Modifier
                         .size(30.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFF0F2F5))
+                        .background(SearchClearButtonBackground)
                         .clickable { onClearQuery() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -187,13 +201,15 @@ private fun SearchInputBar(
             }
         },
         singleLine = true,
-        shape = RoundedCornerShape(20.dp),
+        shape = SearchFieldShape,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = SurfaceWhite,
             unfocusedContainerColor = SurfaceWhite,
             disabledContainerColor = SurfaceWhite,
             focusedBorderColor = SearchAccent,
             unfocusedBorderColor = BorderSoft,
+            focusedTextColor = TextPrimary,
+            unfocusedTextColor = TextPrimary,
             cursorColor = SearchAccent
         )
     )
@@ -307,7 +323,7 @@ private fun RecentSearchSection(
         recentSearches.forEach { keyword ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                shape = SearchRecentCardShape,
                 colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
@@ -338,7 +354,7 @@ private fun RecentSearchSection(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFF3F4F6))
+                            .background(RecentRemoveBackground)
                             .clickable { onRemoveRecentSearch(keyword) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -367,7 +383,7 @@ private fun PopularKeywordSection(
         keywords.forEach { keyword ->
             Surface(
                 modifier = Modifier.clickable { onKeywordClick(keyword) },
-                shape = RoundedCornerShape(50),
+                shape = SearchChipShape,
                 color = SearchChipBackground
             ) {
                 Text(
@@ -391,7 +407,7 @@ private fun SearchProductItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
+        shape = SearchCardShape,
         colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -403,7 +419,7 @@ private fun SearchProductItem(
             Box(
                 modifier = Modifier
                     .size(112.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(SearchImageShape)
                     .background(SearchImageBackground),
                 contentAlignment = Alignment.Center
             ) {
@@ -517,7 +533,7 @@ private fun ProductBadge(
     textColor: Color
 ) {
     Surface(
-        shape = RoundedCornerShape(50),
+        shape = SearchChipShape,
         color = containerColor
     ) {
         Text(

@@ -5,48 +5,69 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class CartViewModel : ViewModel() {
+class CartViewModel(
+    private val repository: CartRepository
+) : ViewModel() {
 
-    val cartItems: StateFlow<List<CartItemUi>> = CartManager.cartItems
-        .stateIn(
+    private val _lastRemovedItem = MutableStateFlow<CartItemUi?>(null)
+    val lastRemovedItem: StateFlow<CartItemUi?> = _lastRemovedItem
+
+    val cartItems: StateFlow<List<CartItemUi>> =
+        repository.cartItems.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
 
-    private val _lastRemovedItem = MutableStateFlow<CartItemUi?>(null)
-    val lastRemovedItem: StateFlow<CartItemUi?> = _lastRemovedItem.asStateFlow()
+    val cartItemCount: StateFlow<Int> =
+        cartItems
+            .map { items -> items.sumOf { it.quantity } }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = 0
+            )
 
-    val cartItemCount: StateFlow<Int> = cartItems
-        .map { items ->
-            items.sumOf { item -> item.quantity }
+    fun addToCart(productId: String) {
+        viewModelScope.launch {
+            repository.addToCart(productId)
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = 0
-        )
+    }
 
     fun increaseQuantity(productId: String) {
-        CartManager.increaseQuantity(productId)
+        viewModelScope.launch {
+            repository.increaseQuantity(productId)
+        }
     }
 
     fun decreaseQuantity(productId: String) {
-        CartManager.decreaseQuantity(productId)
+        viewModelScope.launch {
+            repository.decreaseQuantity(productId)
+        }
     }
 
     fun removeFromCart(productId: String) {
-        _lastRemovedItem.value = CartManager.removeFromCart(productId)
+        viewModelScope.launch {
+            val removedItem = cartItems.value.find { it.product.id == productId }
+            _lastRemovedItem.value = removedItem
+            repository.removeFromCart(productId)
+        }
     }
 
     fun undoRemove() {
-        val removedItem = _lastRemovedItem.value ?: return
-        CartManager.restoreItem(removedItem)
-        _lastRemovedItem.value = null
+        viewModelScope.launch {
+            val removedItem = _lastRemovedItem.value ?: return@launch
+
+            repeat(removedItem.quantity) {
+                repository.addToCart(removedItem.product.id)
+            }
+
+            _lastRemovedItem.value = null
+        }
     }
 
     fun clearLastRemovedItem() {
@@ -54,7 +75,8 @@ class CartViewModel : ViewModel() {
     }
 
     fun clearCart() {
-        CartManager.clearCart()
-        _lastRemovedItem.value = null
+        viewModelScope.launch {
+            repository.clearCart()
+        }
     }
 }

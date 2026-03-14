@@ -1,83 +1,76 @@
 package com.example.sabinacosmeticapplication.feature.cart
 
-import com.example.sabinacosmeticapplication.data.model.Product
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.sabinacosmeticapplication.data.local.cart.CartDao
+import com.example.sabinacosmeticapplication.data.local.cart.CartEntity
+import com.example.sabinacosmeticapplication.data.repository.ProductRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-class CartRepository {
+class CartRepository(
+    private val cartDao: CartDao,
+    private val productRepository: ProductRepository
+) {
 
-    private val _cartItems = MutableStateFlow<List<CartItemUi>>(emptyList())
-    val cartItems: StateFlow<List<CartItemUi>> = _cartItems.asStateFlow()
+    val cartItems: Flow<List<CartItemUi>> =
+        cartDao.observeCartItems().map { cartEntities ->
+            val products = productRepository.getAllProducts()
 
-    fun addToCart(product: Product) {
-        val cartProduct = product.toCartProduct()
-        val currentItems = _cartItems.value.toMutableList()
-        val existingIndex = currentItems.indexOfFirst { item ->
-            item.product.id == cartProduct.id
+            cartEntities.mapNotNull { entity ->
+                val matchedProduct = products.find { product ->
+                    product.id == entity.productId
+                }
+
+                matchedProduct?.let { product ->
+                    CartItemUi(
+                        product = product,
+                        quantity = entity.quantity
+                    )
+                }
+            }
         }
 
-        if (existingIndex >= 0) {
-            val existingItem = currentItems[existingIndex]
-            currentItems[existingIndex] = existingItem.copy(
-                quantity = existingItem.quantity + 1
-            )
-        } else {
-            currentItems.add(
-                CartItemUi(
-                    product = cartProduct,
+    suspend fun addToCart(productId: String) {
+        val existingItem = cartDao.getCartItem(productId)
+
+        if (existingItem == null) {
+            cartDao.upsertCartItem(
+                CartEntity(
+                    productId = productId,
                     quantity = 1
                 )
             )
-        }
-
-        _cartItems.value = currentItems
-    }
-
-    fun increaseQuantity(productId: String) {
-        _cartItems.value = _cartItems.value.map { item ->
-            if (item.product.id == productId) {
-                item.copy(quantity = item.quantity + 1)
-            } else {
-                item
-            }
+        } else {
+            cartDao.upsertCartItem(
+                existingItem.copy(quantity = existingItem.quantity + 1)
+            )
         }
     }
 
-    fun decreaseQuantity(productId: String) {
-        _cartItems.value = _cartItems.value.mapNotNull { item ->
-            if (item.product.id == productId) {
-                val newQuantity = item.quantity - 1
-                if (newQuantity <= 0) {
-                    null
-                } else {
-                    item.copy(quantity = newQuantity)
-                }
-            } else {
-                item
-            }
+    suspend fun increaseQuantity(productId: String) {
+        val existingItem = cartDao.getCartItem(productId) ?: return
+
+        cartDao.upsertCartItem(
+            existingItem.copy(quantity = existingItem.quantity + 1)
+        )
+    }
+
+    suspend fun decreaseQuantity(productId: String) {
+        val existingItem = cartDao.getCartItem(productId) ?: return
+
+        if (existingItem.quantity <= 1) {
+            cartDao.deleteCartItem(productId)
+        } else {
+            cartDao.upsertCartItem(
+                existingItem.copy(quantity = existingItem.quantity - 1)
+            )
         }
     }
 
-    fun removeFromCart(productId: String) {
-        _cartItems.value = _cartItems.value.filterNot { item ->
-            item.product.id == productId
-        }
+    suspend fun removeFromCart(productId: String) {
+        cartDao.deleteCartItem(productId)
     }
 
-    fun clearCart() {
-        _cartItems.value = emptyList()
+    suspend fun clearCart() {
+        cartDao.clearCart()
     }
-}
-
-private fun Product.toCartProduct(): CartProduct {
-    return CartProduct(
-        id = id,
-        title = title,
-        brand = brand,
-        category = category,
-        price = price,
-        priceValue = priceValue,
-        imageUrl = imageUrl
-    )
 }

@@ -1,16 +1,11 @@
 package com.example.sabinacosmeticapplication.feature.cart
 
-data class CartProduct(
-    val id: String,
-    val title: String,
-    val brand: String,
-    val category: String,
-    val price: String,
-    val priceValue: Int,
-    val imageUrl: String
-)
+import com.example.sabinacosmeticapplication.data.model.Product
 
 data class CartItemUi(
-    val product: CartProduct,
+    val product: Product,
     val quantity: Int
-)
+) {
+    val totalPrice: Int
+        get() = product.priceValue * quantity
+}

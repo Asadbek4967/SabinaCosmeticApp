@@ -1,20 +1,30 @@
 <resources>
     <string name="app_name">Sabina Cosmetic Application</string>
 
-    <string name="home_search_placeholder">Mahsulot yoki brend qidiring</string>
-    <string name="home_banner">Banner</string>
-    <string name="home_info_title">Diqqat</string>
-    <string name="home_info_desc">Banner bosilganda chegirma va kuponlarni tekshirish mumkin</string>
-    <string name="home_section_title">Bu mahsulotni otkazib yubormang</string>
+    <string name="cart_title">My cart</string>
+    <string name="cart_clear_all">Clear all</string>
+    <string name="cart_clear_title">Clear cart</string>
+    <string name="cart_clear_message">Are you sure you want to remove all items from your cart? This action cannot be undone.</string>
+    <string name="cart_cancel">Cancel</string>
+    <string name="cart_clear_confirm">Clear</string>
 
-    <string name="home_more">Koproq</string>
+    <string name="cart_empty_title">Your cart is empty</string>
+    <string name="cart_empty_description">Add products from Home or Search to see them here.</string>
 
-    <string name="home_quick_recommended">Tavsiya</string>
-    <string name="home_quick_free_shipping">Bepul yetkazish</string>
-    <string name="home_quick_rocket">Tez yetkazish</string>
-    <string name="home_quick_new">Yangilik</string>
-    <string name="home_quick_discount">Chegirma</string>
-    <string name="home_quick_best">Top</string>
-    <string name="home_quick_lux">Premium</string>
-    <string name="home_quick_delivery">Yetkazish</string>
+    <string name="cart_subtotal">Subtotal</string>
+    <string name="cart_delivery_fee">Delivery fee</string>
+    <string name="cart_discount">Discount</string>
+    <string name="cart_total">Total</string>
+    <string name="cart_delivery_free">Free</string>
+
+    <string name="cart_checkout">Checkout • %1$s</string>
+
+    <string name="cart_item_single">%1$d item</string>
+    <string name="cart_item_plural">%1$d items</string>
+
+    <string name="cart_remove_from_cart">Remove from cart</string>
+    <string name="cart_remove_item">Remove item</string>
+
+    <string name="cart_item_removed">Item removed</string>
+    <string name="cart_undo">UNDO</string>
 </resources>
