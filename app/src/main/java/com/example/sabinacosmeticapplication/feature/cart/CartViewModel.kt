@@ -2,35 +2,35 @@ package com.example.sabinacosmeticapplication.feature.cart
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class CartViewModel(
+@HiltViewModel
+class CartViewModel @Inject constructor(
     private val repository: CartRepository
 ) : ViewModel() {
 
-    private val _lastRemovedItem = MutableStateFlow<CartItemUi?>(null)
-    val lastRemovedItem: StateFlow<CartItemUi?> = _lastRemovedItem
-
-    val cartItems: StateFlow<List<CartItemUi>> =
-        repository.cartItems.stateIn(
+    val uiState: StateFlow<CartUiState> =
+        combine(
+            repository.cartItems,
+            repository.lastRemovedItem
+        ) { items, lastRemovedItem ->
+            CartUiState(
+                items = items,
+                itemCount = items.sumOf { it.quantity },
+                totalPrice = items.sumOf { it.priceValue * it.quantity },
+                lastRemovedItem = lastRemovedItem
+            )
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
+            initialValue = CartUiState()
         )
-
-    val cartItemCount: StateFlow<Int> =
-        cartItems
-            .map { items -> items.sumOf { it.quantity } }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = 0
-            )
 
     fun addToCart(productId: String) {
         viewModelScope.launch {
@@ -52,26 +52,18 @@ class CartViewModel(
 
     fun removeFromCart(productId: String) {
         viewModelScope.launch {
-            val removedItem = cartItems.value.find { it.product.id == productId }
-            _lastRemovedItem.value = removedItem
             repository.removeFromCart(productId)
         }
     }
 
-    fun undoRemove() {
+    fun restoreLastRemovedItem() {
         viewModelScope.launch {
-            val removedItem = _lastRemovedItem.value ?: return@launch
-
-            repeat(removedItem.quantity) {
-                repository.addToCart(removedItem.product.id)
-            }
-
-            _lastRemovedItem.value = null
+            repository.restoreLastRemovedItem()
         }
     }
 
     fun clearLastRemovedItem() {
-        _lastRemovedItem.value = null
+        repository.clearLastRemovedItemState()
     }
 
     fun clearCart() {

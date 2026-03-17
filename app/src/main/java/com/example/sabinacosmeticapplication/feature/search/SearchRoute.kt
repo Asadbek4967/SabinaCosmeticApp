@@ -1,33 +1,52 @@
 package com.example.sabinacosmeticapplication.feature.search
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sabinacosmeticapplication.data.repository.FakeProductRepository
+import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SearchRoute(
     padding: PaddingValues,
-    onProductClick: (String) -> Unit
+    onProductClick: (String) -> Unit,
+    viewModel: SearchViewModel = hiltViewModel()
 ) {
-    val viewModel: SearchViewModel = viewModel(
-        factory = SearchViewModelFactory(
-            repository = FakeProductRepository()
-        )
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SearchUiEvent.ShowError -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
 
     SearchScreen(
         uiState = uiState,
-        onQueryChange = viewModel::onQueryChange,
-        onSearch = viewModel::performSearch,
-        onClearQuery = viewModel::clearQuery,
-        onPopularKeywordClick = viewModel::onPopularKeywordClick,
-        onRemoveRecentSearch = viewModel::removeRecentSearch,
+        onQueryChange = { query ->
+            viewModel.onAction(SearchUiAction.QueryChanged(query))
+        },
+        onSearch = { query ->
+            viewModel.onAction(SearchUiAction.SearchSubmitted(query))
+        },
+        onClearQuery = {
+            viewModel.onAction(SearchUiAction.ClearQueryClicked)
+        },
+        onPopularKeywordClick = { keyword ->
+            viewModel.onAction(SearchUiAction.PopularKeywordClicked(keyword))
+        },
+        onRemoveRecentSearch = { keyword ->
+            viewModel.onAction(SearchUiAction.RecentSearchRemoved(keyword))
+        },
         onProductClick = onProductClick,
-        padding = padding
+        padding = padding,
+        snackbarHostState = snackbarHostState
     )
 }

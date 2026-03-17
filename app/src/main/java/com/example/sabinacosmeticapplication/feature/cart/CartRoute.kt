@@ -1,22 +1,21 @@
-package com.example.sabinacosmeticapplication.feature.productdetail
+package com.example.sabinacosmeticapplication.feature.cart
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun ProductDetailRoute(
+fun CartRoute(
     padding: PaddingValues,
-    onBackClick: () -> Unit,
-    onCartClick: () -> Unit = {},
-    viewModel: ProductDetailViewModel = hiltViewModel()
+    onBackClick: () -> Unit = {},
+    onCheckoutClick: () -> Unit = {},
+    viewModel: CartViewModel
 ) {
-    ProductDetailScreen(
+    CartScreen(
         modifier = Modifier.padding(padding),
         onBackClick = onBackClick,
-        onCartClick = onCartClick,
+        onCheckoutClick = onCheckoutClick,
         viewModel = viewModel
     )
 }

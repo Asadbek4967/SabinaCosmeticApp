@@ -1,18 +1,25 @@
 # Sabina Cosmetic App
 
-A modern Android cosmetic shopping application built with **Kotlin** and **Jetpack Compose**.  
-The application allows users to browse cosmetic products, view product details, and manage their shopping cart with a clean and intuitive interface.
+Sabina Cosmetic App is an Android beauty shopping application built using **Kotlin** and **Jetpack Compose**.
+
+The application allows users to browse cosmetic products, view product details, and manage items inside a shopping cart with a modern UI.
 
 ---
 
 ## Features
 
-- Modern UI built with Jetpack Compose
-- Product browsing system
+- Product browsing
 - Product detail screen
-- Shopping cart system
-- Smooth navigation
-- Clean and scalable project architecture
+- Add to cart functionality
+- Cart badge synchronization
+- Quantity increase / decrease
+- Item removal
+- Automatic subtotal calculation
+- Delivery fee calculation
+- Discount support
+- Checkout summary
+- Clear cart confirmation dialog
+- Empty cart state UI
 
 ---
 
@@ -21,47 +28,13 @@ The application allows users to browse cosmetic products, view product details, 
 - Kotlin
 - Jetpack Compose
 - MVVM Architecture
-- Android Studio
-- Material Design 3
-
----
-
-## Project Structure
-
-
-feature
-├── home
-├── productdetail
-├── cart
-navigation
-ui
-
-
----
-
-## Getting Started
-
-Clone the repository
-
-
-git clone https://github.com/Asadbek4967/SabinaCosmeticApp.git
-
-
-Open the project in **Android Studio** and run it on an emulator or Android device.
-
----
-
-## Future Improvements
-
-- Backend integration
-- Authentication system
-- Payment system
-- Product search system
-- Order history
+- Material 3
+- State Management
 
 ---
 
 ## Author
 
-**Asadbek Matyaqubov**  
+**Asadbek Matyaqubov**
+
 Android Developer

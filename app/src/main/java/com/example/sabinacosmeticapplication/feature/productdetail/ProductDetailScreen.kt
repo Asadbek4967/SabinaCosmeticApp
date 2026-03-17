@@ -12,11 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -25,200 +22,108 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
-
-private val DetailBackground = Color(0xFFF6F7FB)
-private val DetailPrimary = Color(0xFF4D6BFE)
-private val DetailMutedText = Color(0xFF7E8794)
-private val DetailDiscountColor = Color(0xFFE53935)
-private val DetailSurface = Color.White
-private val DetailTitle = Color(0xFF1B1F26)
-private val DetailBody = Color(0xFF4A5565)
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
+import com.example.sabinacosmeticapplication.ui.components.ProductBadge
+import com.example.sabinacosmeticapplication.ui.components.ProductImage
+import com.example.sabinacosmeticapplication.ui.components.ProductPriceBlock
+import com.example.sabinacosmeticapplication.ui.theme.AppColors
+import com.example.sabinacosmeticapplication.ui.theme.AppDimens
+import com.example.sabinacosmeticapplication.ui.theme.AppShapes
 
 @Composable
 fun ProductDetailScreen(
-    padding: PaddingValues,
-    uiState: ProductDetailUiState,
+    modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
-    onAddToCart: () -> Unit
+    onCartClick: () -> Unit,
+    viewModel: ProductDetailViewModel
 ) {
-    val product = uiState.product
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    if (product == null) {
-        ProductNotFoundState(
-            padding = padding,
-            onBackClick = onBackClick
-        )
-        return
+    LaunchedEffect(uiState.isAddedToCart) {
+        if (uiState.isAddedToCart) {
+            snackbarHostState.showSnackbar(
+                message = "Mahsulot savatchaga qo‘shildi",
+                duration = SnackbarDuration.Short
+            )
+            viewModel.consumeAddedToCartState()
+        }
     }
 
-    val displayRating = remember(product.rating) {
-        product.rating.toString()
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DetailBackground)
-            .padding(padding)
-            .navigationBarsPadding()
-    ) {
-        ProductDetailTopBar(
-            title = "Product detail",
-            onBackClick = onBackClick
-        )
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = DetailSurface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    SubcomposeAsyncImage(
-                        model = product.imageUrl,
-                        contentDescription = product.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp)
-                            .clip(RoundedCornerShape(20.dp)),
-                        contentScale = ContentScale.Crop,
-                        loading = { DetailImageFallback(product.category) },
-                        error = { DetailImageFallback(product.category) }
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    Text(
-                        text = product.brand,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = DetailMutedText
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = product.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = DetailTitle
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    ProductMetaChip(text = product.category)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = product.price,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = DetailPrimary
-                        )
-
-                        if (product.originalPrice.isNotBlank()) {
-                            Text(
-                                text = product.originalPrice,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = DetailMutedText,
-                                textDecoration = TextDecoration.LineThrough
-                            )
-                        }
-                    }
-
-                    if (product.discountPercent > 0) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "${product.discountPercent}% OFF",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = DetailDiscountColor
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "⭐ $displayRating (${product.reviewCount} reviews)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = DetailBody
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Text(
-                        text = "Description",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = DetailTitle
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = product.description.ifBlank { "No description yet." },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = DetailBody
-                    )
-                }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = AppColors.Background,
+        topBar = {
+            ProductDetailTopBar(
+                onBackClick = onBackClick,
+                onCartClick = onCartClick
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+        bottomBar = {
+            uiState.product?.let { product ->
+                ProductDetailBottomBar(
+                    price = product.price,
+                    onAddToCartClick = { viewModel.addToCart() }
+                )
             }
         }
+    ) { innerPadding ->
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
 
-        Surface(
-            color = DetailSurface,
-            tonalElevation = 6.dp,
-            shadowElevation = 6.dp
-        ) {
-            Button(
-                onClick = onAddToCart,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DetailPrimary,
-                    contentColor = Color.White
+            uiState.product != null -> {
+                ProductDetailContent(
+                    uiState = uiState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = null
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = "Add to cart",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+            }
+
+            else -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage ?: "Noma’lum xatolik",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = AppColors.SecondaryText
+                        )
+                    )
+                }
             }
         }
     }
@@ -226,135 +131,245 @@ fun ProductDetailScreen(
 
 @Composable
 private fun ProductDetailTopBar(
-    title: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onCartClick: () -> Unit
 ) {
     Surface(
-        tonalElevation = 2.dp,
-        color = DetailSurface
+        color = AppColors.Surface,
+        shadowElevation = AppDimens.Space4
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 12.dp)
+                .padding(
+                    horizontal = AppDimens.ScreenHorizontal,
+                    vertical = AppDimens.Space12
+                ),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier.align(Alignment.CenterStart)
-            ) {
+            IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
+                    tint = AppColors.Primary
                 )
             }
 
             Text(
-                text = title,
-                modifier = Modifier.align(Alignment.Center),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = DetailTitle
+                text = "Product Detail",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = AppColors.Primary,
+                    fontWeight = FontWeight.Bold
+                )
             )
+
+            IconButton(onClick = onCartClick) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "Cart",
+                    tint = AppColors.Primary
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ProductMetaChip(
-    text: String
+private fun ProductDetailContent(
+    uiState: ProductDetailUiState,
+    modifier: Modifier = Modifier
+) {
+    val product = uiState.product ?: return
+
+    Column(
+        modifier = modifier
+            .background(AppColors.Background)
+            .verticalScroll(rememberScrollState())
+            .padding(
+                horizontal = AppDimens.ScreenHorizontal,
+                vertical = AppDimens.Space16
+            )
+    ) {
+        Card(
+            shape = AppShapes.ExtraLarge,
+            colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.Space4)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppDimens.Space20),
+                contentAlignment = Alignment.Center
+            ) {
+                ProductImage(
+                    imageUrl = product.imageUrl,
+                    contentDescription = product.title,
+                    size = AppDimens.ProductImageXL
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(AppDimens.Space16))
+
+        if (product.brand.isNotBlank()) {
+            Text(
+                text = product.brand,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = AppColors.SecondaryText,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(AppDimens.Space6))
+
+        Text(
+            text = product.title,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                color = AppColors.Primary,
+                fontWeight = FontWeight.Bold
+            )
+        )
+
+        Spacer(modifier = Modifier.height(AppDimens.Space8))
+
+        if (product.category.isNotBlank()) {
+            ProductBadge(text = product.category)
+        }
+
+        Spacer(modifier = Modifier.height(AppDimens.Space12))
+
+        ProductPriceBlock(
+            price = product.price,
+            oldPrice = product.oldPrice,
+            discountLabel = product.discountLabel
+        )
+
+        Spacer(modifier = Modifier.height(AppDimens.Space20))
+
+        AppSectionTitle(title = "Description")
+
+        Card(
+            shape = AppShapes.Large,
+            colors = CardDefaults.cardColors(containerColor = AppColors.Surface)
+        ) {
+            Text(
+                text = product.description,
+                modifier = Modifier.padding(AppDimens.Space16),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = AppColors.SecondaryText
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(AppDimens.Space20))
+
+        AppSectionTitle(title = "Product Info")
+
+        Card(
+            shape = AppShapes.Large,
+            colors = CardDefaults.cardColors(containerColor = AppColors.Surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(AppDimens.Space16),
+                verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+            ) {
+                ProductInfoRow(label = "Brand", value = product.brand)
+                ProductInfoRow(label = "Category", value = product.category)
+                ProductInfoRow(label = "Product ID", value = product.id)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(AppDimens.Space32))
+    }
+}
+
+@Composable
+private fun ProductInfoRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = AppColors.SecondaryText
+            )
+        )
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = AppColors.Primary,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+    }
+}
+
+@Composable
+private fun ProductDetailBottomBar(
+    price: String,
+    onAddToCartClick: () -> Unit
 ) {
     Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color(0xFFEAF3FF)
+        color = AppColors.Surface,
+        shadowElevation = AppDimens.Space8
     ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = DetailPrimary,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-private fun ProductNotFoundState(
-    padding: PaddingValues,
-    onBackClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DetailBackground)
-            .padding(padding),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(
+                    horizontal = AppDimens.ScreenHorizontal,
+                    vertical = AppDimens.Space14
+                ),
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(72.dp),
-                shape = CircleShape,
-                color = Color(0xFFEAF3FF)
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "🛍️",
-                        style = MaterialTheme.typography.headlineMedium
+                Text(
+                    text = "Price",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = AppColors.SecondaryText
                     )
-                }
+                )
+
+                Text(
+                    text = price,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = AppColors.Price,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Product not found",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = DetailTitle
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "This product is unavailable or could not be loaded.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = DetailMutedText
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
-                onClick = onBackClick,
-                shape = RoundedCornerShape(16.dp)
+                onClick = onAddToCartClick,
+                shape = AppShapes.Pill,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppColors.Primary,
+                    contentColor = AppColors.OnPrimary
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = AppDimens.Space20,
+                    vertical = AppDimens.Space12
+                )
             ) {
-                Text(text = "Go back")
+                Text(
+                    text = "Add to Cart",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun DetailImageFallback(category: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFEFF3FF)),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = when (category) {
-                "Serum" -> "💧"
-                "Sun Care" -> "☀️"
-                "Cream" -> "🫙"
-                "Cleanser" -> "🫧"
-                "Lip Care" -> "💄"
-                "Ampoule" -> "🩵"
-                "Toner" -> "✨"
-                else -> "🧴"
-            },
-            style = MaterialTheme.typography.displaySmall
-        )
     }
 }

@@ -1,8 +1,5 @@
 package com.example.sabinacosmeticapplication
 
-import androidx.room.Room
-import com.example.sabinacosmeticapplication.data.local.cart.AppDatabase
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,17 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.sabinacosmeticapplication.navigation.MainNavHost
 import com.example.sabinacosmeticapplication.ui.theme.SabinaCosmeticApplicationTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        val database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "sabina_cosmetic_db"
-        ).build()
 
         setContent {
             SabinaCosmeticApplicationTheme {
