@@ -1,5 +1,8 @@
 package com.example.sabinacosmeticapplication.feature.cart
 
+
+
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,18 +10,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.ShoppingCartCheckout
 import androidx.compose.material3.Button
@@ -33,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,7 +47,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sabinacosmeticapplication.ui.components.AppTopBar
+import com.example.sabinacosmeticapplication.ui.components.ProductBadge
 import com.example.sabinacosmeticapplication.ui.components.ProductImage
 import com.example.sabinacosmeticapplication.ui.components.ProductPriceBlock
 import com.example.sabinacosmeticapplication.ui.components.QuantityStepper
@@ -69,20 +77,21 @@ fun CartScreen(
             duration = SnackbarDuration.Short
         )
 
-        if (result.name == "ActionPerformed") {
-            viewModel.restoreLastRemovedItem()
-        } else {
-            viewModel.clearLastRemovedItem()
+        when (result) {
+            SnackbarResult.ActionPerformed -> viewModel.restoreLastRemovedItem()
+            SnackbarResult.Dismissed -> viewModel.clearLastRemovedItem()
         }
     }
 
     Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AppColors.Background),
+        modifier = modifier.fillMaxSize(),
         containerColor = AppColors.Background,
         topBar = {
-            CartTopBar(onBackClick = onBackClick)
+            AppTopBar(
+                title = "My Cart",
+                subtitle = "Review your selected products",
+                onBackClick = onBackClick
+            )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -128,48 +137,9 @@ fun CartScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(AppDimens.Space32))
+                    Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun CartTopBar(
-    onBackClick: () -> Unit
-) {
-    Surface(
-        color = AppColors.Surface,
-        shadowElevation = AppDimens.Space4
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(
-                    horizontal = AppDimens.ScreenHorizontal,
-                    vertical = AppDimens.Space12
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = AppColors.Primary
-                )
-            }
-
-            Spacer(modifier = Modifier.width(AppDimens.Space8))
-
-            Text(
-                text = "My Cart",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.Primary
-                )
-            )
         }
     }
 }
@@ -195,17 +165,15 @@ private fun EmptyCartContent(
 
             Text(
                 text = "Savatchangiz bo‘sh",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = AppColors.Primary
-                )
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = AppColors.Primary
             )
 
             Text(
-                text = "Mahsulot qo‘shsangiz shu yerda ko‘rinadi",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = AppColors.SecondaryText
-                )
+                text = "Mahsulot qo‘shganingizdan keyin shu yerda ko‘rinadi",
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.SecondaryText
             )
         }
     }
@@ -221,7 +189,7 @@ private fun CartItemCard(
     Card(
         shape = AppShapes.Large,
         colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.Space4)
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.CardElevation)
     ) {
         Column(
             modifier = Modifier
@@ -234,34 +202,40 @@ private fun CartItemCard(
             ) {
                 ProductImage(
                     imageUrl = item.imageUrl,
+                    imageRes = item.imageRes,
                     contentDescription = item.title,
-                    size = AppDimens.ProductImageMedium
+                    size = AppDimens.ProductImageMedium,
+                    badgeText = item.category
                 )
 
                 Spacer(modifier = Modifier.width(AppDimens.Space12))
 
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(AppDimens.Space6)
                 ) {
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = AppColors.Primary
-                        )
-                    )
-
                     if (item.brand.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(AppDimens.Space4))
                         Text(
                             text = item.brand,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = AppColors.SecondaryText
-                            )
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.SecondaryText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(AppDimens.Space8))
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppColors.Primary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    if (item.category.isNotBlank()) {
+                        ProductBadge(text = item.category)
+                    }
 
                     ProductPriceBlock(
                         price = item.price,
@@ -295,11 +269,10 @@ private fun CartItemCard(
                 )
 
                 Text(
-                    text = "Total: ₩${item.priceValue * item.quantity}",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = AppColors.Price
-                    )
+                    text = "Total: ${formatWon(item.priceValue * item.quantity)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.Price
                 )
             }
         }
@@ -330,18 +303,16 @@ private fun CartBottomBar(
             ) {
                 Text(
                     text = "Total",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = AppColors.Primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AppColors.Primary
                 )
 
                 Text(
-                    text = "₩$totalPrice",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = AppColors.Price,
-                        fontWeight = FontWeight.Bold
-                    )
+                    text = formatWon(totalPrice),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.Price
                 )
             }
 
@@ -360,11 +331,14 @@ private fun CartBottomBar(
             ) {
                 Text(
                     text = "Checkout",
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
     }
+}
+
+private fun formatWon(value: Int): String {
+    return "₩${value.toString().reversed().chunked(3).joinToString(",").reversed()}"
 }

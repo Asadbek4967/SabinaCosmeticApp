@@ -2,15 +2,14 @@ package com.example.sabinacosmeticapplication.feature.cart
 
 import com.example.sabinacosmeticapplication.data.local.cart.CartDao
 import com.example.sabinacosmeticapplication.data.local.cart.CartEntity
+import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.data.repository.ProductRepository
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-@Singleton
 class CartRepository @Inject constructor(
     private val cartDao: CartDao,
     private val productRepository: ProductRepository
@@ -22,17 +21,19 @@ class CartRepository @Inject constructor(
     val cartItems: Flow<List<CartItemUi>> =
         cartDao.observeCartItems().map { entities ->
             entities.mapNotNull { entity ->
-                val product = productRepository.getProductById(entity.productId)
+                val product: Product = productRepository.getProductById(entity.productId)
                     ?: return@mapNotNull null
 
                 CartItemUi(
                     productId = product.id,
                     title = product.title,
                     brand = product.brand,
+                    category = product.category,
                     price = product.price,
                     priceValue = product.priceValue,
                     quantity = entity.quantity,
                     imageUrl = product.imageUrl,
+                    imageRes = product.imageRes,
                     oldPrice = product.oldPrice,
                     discountLabel = product.discountLabel
                 )
@@ -40,7 +41,7 @@ class CartRepository @Inject constructor(
         }
 
     suspend fun addToCart(productId: String) {
-        val existingItem = cartDao.getCartItem(productId)
+        val existingItem: CartEntity? = cartDao.getCartItem(productId)
 
         if (existingItem == null) {
             cartDao.upsertCartItem(
@@ -59,7 +60,7 @@ class CartRepository @Inject constructor(
     }
 
     suspend fun increaseQuantity(productId: String) {
-        val existingItem = cartDao.getCartItem(productId) ?: return
+        val existingItem: CartEntity = cartDao.getCartItem(productId) ?: return
 
         cartDao.upsertCartItem(
             existingItem.copy(
@@ -69,31 +70,33 @@ class CartRepository @Inject constructor(
     }
 
     suspend fun decreaseQuantity(productId: String) {
-        val existingItem = cartDao.getCartItem(productId) ?: return
+        val existingItem: CartEntity = cartDao.getCartItem(productId) ?: return
 
-        if (existingItem.quantity > 1) {
+        if (existingItem.quantity <= 1) {
+            removeFromCart(productId)
+        } else {
             cartDao.upsertCartItem(
                 existingItem.copy(
                     quantity = existingItem.quantity - 1
                 )
             )
-        } else {
-            removeFromCart(productId)
         }
     }
 
     suspend fun removeFromCart(productId: String) {
-        val existingItem = cartDao.getCartItem(productId) ?: return
-        val product = productRepository.getProductById(productId) ?: return
+        val existingItem: CartEntity = cartDao.getCartItem(productId) ?: return
+        val product: Product = productRepository.getProductById(productId) ?: return
 
         _lastRemovedItem.value = CartItemUi(
             productId = product.id,
             title = product.title,
             brand = product.brand,
+            category = product.category,
             price = product.price,
             priceValue = product.priceValue,
             quantity = existingItem.quantity,
             imageUrl = product.imageUrl,
+            imageRes = product.imageRes,
             oldPrice = product.oldPrice,
             discountLabel = product.discountLabel
         )
@@ -102,8 +105,8 @@ class CartRepository @Inject constructor(
     }
 
     suspend fun restoreLastRemovedItem() {
-        val removedItem = _lastRemovedItem.value ?: return
-        val existingItem = cartDao.getCartItem(removedItem.productId)
+        val removedItem: CartItemUi = _lastRemovedItem.value ?: return
+        val existingItem: CartEntity? = cartDao.getCartItem(removedItem.productId)
 
         if (existingItem == null) {
             cartDao.upsertCartItem(
@@ -123,12 +126,12 @@ class CartRepository @Inject constructor(
         _lastRemovedItem.value = null
     }
 
-    fun clearLastRemovedItemState() {
+    suspend fun clearCart() {
+        cartDao.clearCart()
         _lastRemovedItem.value = null
     }
 
-    suspend fun clearCart() {
-        cartDao.clearCart()
+    fun clearLastRemovedItem() {
         _lastRemovedItem.value = null
     }
 }

@@ -3,12 +3,12 @@ package com.example.sabinacosmeticapplication.feature.cart
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
@@ -22,7 +22,6 @@ class CartViewModel @Inject constructor(
         ) { items, lastRemovedItem ->
             CartUiState(
                 items = items,
-                itemCount = items.sumOf { it.quantity },
                 totalPrice = items.sumOf { it.priceValue * it.quantity },
                 lastRemovedItem = lastRemovedItem
             )
@@ -63,7 +62,7 @@ class CartViewModel @Inject constructor(
     }
 
     fun clearLastRemovedItem() {
-        repository.clearLastRemovedItemState()
+        repository.clearLastRemovedItem()
     }
 
     fun clearCart() {

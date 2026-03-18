@@ -7,22 +7,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,11 +41,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
+import com.example.sabinacosmeticapplication.ui.components.AppTopBar
 import com.example.sabinacosmeticapplication.ui.components.ProductBadge
 import com.example.sabinacosmeticapplication.ui.components.ProductImage
 import com.example.sabinacosmeticapplication.ui.components.ProductPriceBlock
+import com.example.sabinacosmeticapplication.ui.components.ProductStatusBadge
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.AppShapes
@@ -72,9 +77,18 @@ fun ProductDetailScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = AppColors.Background,
         topBar = {
-            ProductDetailTopBar(
+            AppTopBar(
+                title = "Product Detail",
                 onBackClick = onBackClick,
-                onCartClick = onCartClick
+                actions = {
+                    IconButton(onClick = onCartClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.ShoppingCart,
+                            contentDescription = "Cart",
+                            tint = AppColors.Primary
+                        )
+                    }
+                }
             )
         },
         snackbarHost = {
@@ -91,14 +105,11 @@ fun ProductDetailScreen(
     ) { innerPadding ->
         when {
             uiState.isLoading -> {
-                Box(
+                ProductDetailLoading(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                        .padding(innerPadding)
+                )
             }
 
             uiState.product != null -> {
@@ -111,67 +122,52 @@ fun ProductDetailScreen(
             }
 
             else -> {
-                Box(
+                ProductDetailError(
+                    message = uiState.errorMessage ?: "Noma’lum xatolik",
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = uiState.errorMessage ?: "Noma’lum xatolik",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = AppColors.SecondaryText
-                        )
-                    )
-                }
+                        .padding(innerPadding)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ProductDetailTopBar(
-    onBackClick: () -> Unit,
-    onCartClick: () -> Unit
+private fun ProductDetailLoading(
+    modifier: Modifier = Modifier
 ) {
-    Surface(
-        color = AppColors.Surface,
-        shadowElevation = AppDimens.Space4
+    Box(
+        modifier = modifier.background(AppColors.Background),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(
-                    horizontal = AppDimens.ScreenHorizontal,
-                    vertical = AppDimens.Space12
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        CircularProgressIndicator(
+            color = AppColors.Primary
+        )
+    }
+}
+
+@Composable
+private fun ProductDetailError(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.background(AppColors.Background),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            shape = AppShapes.ExtraLarge,
+            color = AppColors.Surface,
+            shadowElevation = AppDimens.CardElevation,
+            modifier = Modifier.padding(horizontal = AppDimens.ScreenHorizontal)
         ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = AppColors.Primary
-                )
-            }
-
             Text(
-                text = "Product Detail",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = AppColors.Primary,
-                    fontWeight = FontWeight.Bold
-                )
+                text = message,
+                modifier = Modifier.padding(AppDimens.Space20),
+                style = MaterialTheme.typography.bodyLarge,
+                color = AppColors.SecondaryText
             )
-
-            IconButton(onClick = onCartClick) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Cart",
-                    tint = AppColors.Primary
-                )
-            }
         }
     }
 }
@@ -195,7 +191,7 @@ private fun ProductDetailContent(
         Card(
             shape = AppShapes.ExtraLarge,
             colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.Space4)
+            elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.CardElevation)
         ) {
             Box(
                 modifier = Modifier
@@ -205,21 +201,32 @@ private fun ProductDetailContent(
             ) {
                 ProductImage(
                     imageUrl = product.imageUrl,
+                    imageRes = product.imageRes,
                     contentDescription = product.title,
-                    size = AppDimens.ProductImageXL
+                    size = AppDimens.ProductImageXL,
+                    badgeText = product.category
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(AppDimens.Space16))
+        Spacer(modifier = Modifier.height(AppDimens.Space20))
+
+        ProductBadgeRow(
+            category = product.category,
+            isBestSeller = product.isBestSeller,
+            isFlashSale = product.isFlashSale
+        )
 
         if (product.brand.isNotBlank()) {
+            Spacer(modifier = Modifier.height(AppDimens.Space12))
             Text(
                 text = product.brand,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = AppColors.SecondaryText,
                     fontWeight = FontWeight.Medium
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
@@ -233,12 +240,6 @@ private fun ProductDetailContent(
             )
         )
 
-        Spacer(modifier = Modifier.height(AppDimens.Space8))
-
-        if (product.category.isNotBlank()) {
-            ProductBadge(text = product.category)
-        }
-
         Spacer(modifier = Modifier.height(AppDimens.Space12))
 
         ProductPriceBlock(
@@ -247,9 +248,12 @@ private fun ProductDetailContent(
             discountLabel = product.discountLabel
         )
 
-        Spacer(modifier = Modifier.height(AppDimens.Space20))
+        Spacer(modifier = Modifier.height(AppDimens.Space24))
 
-        AppSectionTitle(title = "Description")
+        AppSectionTitle(
+            title = "Description",
+            subtitle = "About this product"
+        )
 
         Card(
             shape = AppShapes.Large,
@@ -266,7 +270,10 @@ private fun ProductDetailContent(
 
         Spacer(modifier = Modifier.height(AppDimens.Space20))
 
-        AppSectionTitle(title = "Product Info")
+        AppSectionTitle(
+            title = "Product Info",
+            subtitle = "Basic product details"
+        )
 
         Card(
             shape = AppShapes.Large,
@@ -276,13 +283,35 @@ private fun ProductDetailContent(
                 modifier = Modifier.padding(AppDimens.Space16),
                 verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
             ) {
-                ProductInfoRow(label = "Brand", value = product.brand)
-                ProductInfoRow(label = "Category", value = product.category)
+                ProductInfoRow(label = "Brand", value = product.brand.ifBlank { "-" })
+                ProductInfoRow(label = "Category", value = product.category.ifBlank { "-" })
                 ProductInfoRow(label = "Product ID", value = product.id)
             }
         }
 
         Spacer(modifier = Modifier.height(AppDimens.Space32))
+        Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
+    }
+}
+
+@Composable
+private fun ProductBadgeRow(
+    category: String,
+    isBestSeller: Boolean,
+    isFlashSale: Boolean
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space8),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (category.isNotBlank()) {
+            ProductBadge(text = category)
+        }
+
+        ProductStatusBadge(
+            isBestSeller = isBestSeller,
+            isFlashSale = isFlashSale
+        )
     }
 }
 
@@ -291,24 +320,31 @@ private fun ProductInfoRow(
     label: String,
     value: String
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = AppColors.SecondaryText
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = AppColors.SecondaryText
+                )
             )
-        )
 
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = AppColors.Primary,
-                fontWeight = FontWeight.SemiBold
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = AppColors.Primary,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-        )
+        }
+
+        Spacer(modifier = Modifier.height(AppDimens.Space12))
+        HorizontalDivider(color = AppColors.Divider)
     }
 }
 

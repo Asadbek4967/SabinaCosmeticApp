@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -25,13 +26,25 @@ import androidx.navigation.navArgument
 import com.example.sabinacosmeticapplication.feature.cart.CartRoute
 import com.example.sabinacosmeticapplication.feature.cart.CartViewModel
 import com.example.sabinacosmeticapplication.feature.categories.CategoriesScreen
+import com.example.sabinacosmeticapplication.feature.categoryproducts.CategoryProductsRoute
 import com.example.sabinacosmeticapplication.feature.home.HomeRoute
 import com.example.sabinacosmeticapplication.feature.my.MyScreen
 import com.example.sabinacosmeticapplication.feature.productdetail.ProductDetailRoute
 import com.example.sabinacosmeticapplication.feature.search.SearchRoute
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private const val PRODUCT_DETAIL_ROUTE = "product_detail"
 private const val PRODUCT_ID_ARG = "productId"
+
+private const val CATEGORY_PRODUCTS_ROUTE = "category_products"
+private const val CATEGORY_ARG = "category"
+
+private val BottomBarContainerColor = Color.White
+private val BottomBarContentColor = Color(0xFF2F7DF6)
+private val BottomBarSelectedColor = Color(0xFF2F7DF6)
+private val BottomBarUnselectedColor = Color(0xFF8B95A1)
+private val BottomBarIndicatorColor = Color(0xFFEAF3FF)
 
 private fun NavHostController.navigateToBottomRoute(route: String) {
     navigate(route) {
@@ -47,70 +60,32 @@ private fun NavHostController.navigateToProductDetail(productId: String) {
     navigate("$PRODUCT_DETAIL_ROUTE/$productId")
 }
 
+private fun NavHostController.navigateToCategoryProducts(category: String) {
+    val encodedCategory = URLEncoder.encode(category, StandardCharsets.UTF_8.toString())
+    navigate("$CATEGORY_PRODUCTS_ROUTE/$encodedCategory")
+}
+
 @Composable
 fun MainNavHost() {
     val navController = rememberNavController()
     val cartViewModel: CartViewModel = hiltViewModel()
     val cartUiState by cartViewModel.uiState.collectAsStateWithLifecycle()
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    val showBottomBar = currentDestination.shouldShowBottomBar()
+
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                contentColor = Color(0xFF2F7DF6)
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-
-                bottomItems.forEach { item ->
-                    val selected = currentDestination?.hierarchy?.any { destination ->
-                        destination.route == item.route
-                    } == true
-
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigateToBottomRoute(item.route)
-                        },
-                        icon = {
-                            if (item.route == BottomRoute.Cart.route && cartUiState.itemCount > 0) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge {
-                                            Text(
-                                                text = if (cartUiState.itemCount > 99) {
-                                                    "99+"
-                                                } else {
-                                                    cartUiState.itemCount.toString()
-                                                }
-                                            )
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = item.label
-                                    )
-                                }
-                            } else {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.label
-                                )
-                            }
-                        },
-                        label = {
-                            Text(text = item.label)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Color(0xFF2F7DF6),
-                            selectedTextColor = Color(0xFF2F7DF6),
-                            unselectedIconColor = Color(0xFF8B95A1),
-                            unselectedTextColor = Color(0xFF8B95A1),
-                            indicatorColor = Color(0xFFEAF3FF)
-                        )
-                    )
-                }
+            if (showBottomBar) {
+                MainBottomBar(
+                    currentDestination = currentDestination,
+                    cartItemCount = cartUiState.itemCount,
+                    onItemClick = { route ->
+                        navController.navigateToBottomRoute(route)
+                    }
+                )
             }
         }
     ) { innerPadding ->
@@ -131,7 +106,12 @@ fun MainNavHost() {
             }
 
             composable(BottomRoute.Categories.route) {
-                CategoriesScreen(padding = innerPadding)
+                CategoriesScreen(
+                    padding = innerPadding,
+                    onCategoryClick = { category ->
+                        navController.navigateToCategoryProducts(category)
+                    }
+                )
             }
 
             composable(BottomRoute.Search.route) {
@@ -143,6 +123,10 @@ fun MainNavHost() {
                 )
             }
 
+            composable(BottomRoute.My.route) {
+                MyScreen(padding = innerPadding)
+            }
+
             composable(BottomRoute.Cart.route) {
                 CartRoute(
                     padding = innerPadding,
@@ -150,8 +134,23 @@ fun MainNavHost() {
                 )
             }
 
-            composable(BottomRoute.My.route) {
-                MyScreen(padding = innerPadding)
+            composable(
+                route = "$CATEGORY_PRODUCTS_ROUTE/{$CATEGORY_ARG}",
+                arguments = listOf(
+                    navArgument(CATEGORY_ARG) {
+                        type = NavType.StringType
+                    }
+                )
+            ) {
+                CategoryProductsRoute(
+                    padding = innerPadding,
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onProductClick = { productId ->
+                        navController.navigateToProductDetail(productId)
+                    }
+                )
             }
 
             composable(
@@ -174,4 +173,93 @@ fun MainNavHost() {
             }
         }
     }
+}
+
+@Composable
+private fun MainBottomBar(
+    currentDestination: NavDestination?,
+    cartItemCount: Int,
+    onItemClick: (String) -> Unit
+) {
+    NavigationBar(
+        containerColor = BottomBarContainerColor,
+        contentColor = BottomBarContentColor
+    ) {
+        bottomItems.forEach { item ->
+            val selected = currentDestination
+                ?.hierarchy
+                ?.any { destination -> destination.route == item.route } == true
+
+            NavigationBarItem(
+                selected = selected,
+                onClick = { onItemClick(item.route) },
+                icon = {
+                    BottomBarIcon(
+                        route = item.route,
+                        icon = item.icon,
+                        label = item.label,
+                        cartItemCount = cartItemCount
+                    )
+                },
+                label = {
+                    Text(text = item.label)
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = BottomBarSelectedColor,
+                    selectedTextColor = BottomBarSelectedColor,
+                    unselectedIconColor = BottomBarUnselectedColor,
+                    unselectedTextColor = BottomBarUnselectedColor,
+                    indicatorColor = BottomBarIndicatorColor
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomBarIcon(
+    route: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    cartItemCount: Int
+) {
+    val isCartRoute = route == BottomRoute.Cart.route
+    val shouldShowBadge = isCartRoute && cartItemCount > 0
+
+    if (shouldShowBadge) {
+        BadgedBox(
+            badge = {
+                Badge {
+                    Text(
+                        text = if (cartItemCount > 99) {
+                            "99+"
+                        } else {
+                            cartItemCount.toString()
+                        }
+                    )
+                }
+            }
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label
+            )
+        }
+    } else {
+        Icon(
+            imageVector = icon,
+            contentDescription = label
+        )
+    }
+}
+
+private fun NavDestination?.shouldShowBottomBar(): Boolean {
+    val route = this?.route
+    return route in setOf(
+        BottomRoute.Home.route,
+        BottomRoute.Categories.route,
+        BottomRoute.Search.route,
+        BottomRoute.My.route,
+        BottomRoute.Cart.route
+    )
 }

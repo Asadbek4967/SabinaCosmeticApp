@@ -1,11 +1,11 @@
 package com.example.sabinacosmeticapplication.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class BottomRoute(
@@ -16,31 +16,31 @@ sealed class BottomRoute(
     data object Home : BottomRoute(
         route = "home",
         label = "Home",
-        icon = Icons.Default.Home
+        icon = Icons.Outlined.Home
     )
 
     data object Categories : BottomRoute(
         route = "categories",
         label = "Categories",
-        icon = Icons.Default.Category
+        icon = Icons.Outlined.Category
     )
 
     data object Search : BottomRoute(
         route = "search",
         label = "Search",
-        icon = Icons.Default.Search
+        icon = Icons.Outlined.Search
     )
 
     data object My : BottomRoute(
         route = "my",
         label = "My",
-        icon = Icons.Default.Person
+        icon = Icons.Outlined.Person
     )
 
     data object Cart : BottomRoute(
         route = "cart",
         label = "Cart",
-        icon = Icons.Default.ShoppingCart
+        icon = Icons.Outlined.ShoppingCart
     )
 }
 

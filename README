@@ -1,0 +1,149 @@
+🚀 Latest Improvements
+
+Since the last update, the project has been significantly improved in terms of architecture, stability, and production readiness.
+
+🔧 Navigation & App Stability
+
+Refactored MainNavHost to follow a more scalable and maintainable navigation structure.
+
+Introduced:
+
+cleaner route handling
+
+encoded navigation arguments (e.g., category)
+
+safer navigation extensions
+
+Fixed startup issues related to improper ViewModel initialization.
+
+Ensured proper lifecycle-aware state handling using collectAsStateWithLifecycle.
+
+🧠 ViewModel & State Management
+
+Improved ViewModel integration with Hilt:
+
+Added proper @HiltViewModel usage
+
+Ensured dependency injection consistency across layers
+
+Refactored state handling:
+
+Introduced a more stable CartUiState
+
+Used combine + StateFlow for reactive UI updates
+
+Optimized UI reactivity and reduced unnecessary recompositions.
+
+💉 Dependency Injection Improvements
+
+Strengthened DI setup using Hilt:
+
+Clean separation of responsibilities in AppModule
+
+Proper scoping with @Singleton
+
+Ensured:
+
+database
+
+DAO
+
+repositories
+are injected in a production-ready manner
+
+🗄️ Data Layer Enhancements
+
+Improved interaction between:
+
+Room Database
+
+CartRepository
+
+ProductRepository
+
+Ensured a more predictable data flow:
+
+local data + UI state synchronization
+
+Prepared architecture for easy backend integration.
+
+🧩 Code Quality & Structure
+
+Further improved project modularization:
+
+cleaner separation between feature, domain, and data
+
+Increased readability and maintainability:
+
+better naming conventions
+
+reduced duplication
+
+Followed a more production-level code organization style.
+
+🎯 UI & UX Improvements
+
+Improved:
+
+bottom navigation behavior
+
+cart badge updates
+
+screen transitions
+
+Better handling of:
+
+padding
+
+system UI (status bar & navigation bar styling)
+
+More consistent visual behavior across screens.
+
+🧪 Stability & Debugging
+
+Fixed critical issues related to:
+
+app startup crashes
+
+ViewModel lifecycle
+
+navigation state
+
+Improved debugging workflow using Logcat and structured filtering.
+
+📈 Current Development Level
+
+This project has evolved from a simple UI prototype into a structured, scalable Android application with:
+
+real architecture decisions
+
+lifecycle-aware state management
+
+dependency injection
+
+local persistence
+
+reusable UI system
+
+It is now moving towards a production-ready level application.
+
+🔜 Upcoming Focus
+
+Backend integration (REST API)
+
+Authentication system
+
+Checkout & payment flow
+
+Wishlist / favorites
+
+Performance optimization
+
+UI polish for Play Store release
+
+Modularization (multi-module architecture)
+
+## 🧑‍💻 Author
+
+Developed by Asadbek Matyaqubov
+Android Developer | Kotlin | Jetpack Compose

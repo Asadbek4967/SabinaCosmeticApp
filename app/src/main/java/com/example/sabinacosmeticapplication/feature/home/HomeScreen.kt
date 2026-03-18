@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -39,16 +37,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
 import com.example.sabinacosmeticapplication.ui.components.VerticalProductCard
+import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 
 private val HomeBackground = Color(0xFFF6F7FB)
 private val HomePrimary = Color(0xFF4D6BFE)
 private val HomeSoftBlue = Color(0xFFEFF3FF)
 private val HomeTextPrimary = Color(0xFF1D2433)
 private val HomeTextSecondary = Color(0xFF7C8799)
+private val HomeIndicatorInactive = Color(0xFFD7DCE8)
 
 @Composable
 fun HomeScreen(
@@ -60,15 +59,14 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(HomeBackground)
-            .padding(padding)
-            .navigationBarsPadding()
+            .padding(padding),
+        verticalArrangement = Arrangement.spacedBy(AppDimens.HomeSectionSpacing),
+        contentPadding = PaddingValues(bottom = AppDimens.Space28)
     ) {
         item {
             HomeTopSection(
                 banners = uiState.banners,
-                onSearchClick = {
-                    onAction(HomeUiAction.SearchClick)
-                }
+                onSearchClick = { onAction(HomeUiAction.SearchClick) }
             )
         }
 
@@ -80,17 +78,9 @@ fun HomeScreen(
 
         if (uiState.flashSaleProducts.isNotEmpty()) {
             item {
-                AppSectionTitle(
+                ProductShowcaseSection(
                     title = "Flash Sale",
                     subtitle = "Limited-time hot deals",
-                    titleColor = HomeTextPrimary,
-                    subtitleColor = HomeTextSecondary,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-
-            item {
-                HorizontalProductSection(
                     products = uiState.flashSaleProducts,
                     onProductClick = { productId ->
                         onAction(HomeUiAction.ProductClick(productId))
@@ -101,17 +91,9 @@ fun HomeScreen(
 
         if (uiState.bestSellerProducts.isNotEmpty()) {
             item {
-                AppSectionTitle(
+                ProductShowcaseSection(
                     title = "Best Sellers",
                     subtitle = "Most loved by customers",
-                    titleColor = HomeTextPrimary,
-                    subtitleColor = HomeTextSecondary,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-
-            item {
-                HorizontalProductSection(
                     products = uiState.bestSellerProducts,
                     onProductClick = { productId ->
                         onAction(HomeUiAction.ProductClick(productId))
@@ -127,7 +109,7 @@ fun HomeScreen(
                     subtitle = "Picked for your beauty routine",
                     titleColor = HomeTextPrimary,
                     subtitleColor = HomeTextSecondary,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = AppDimens.ScreenHorizontal)
                 )
             }
 
@@ -139,10 +121,6 @@ fun HomeScreen(
                     }
                 )
             }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(28.dp))
         }
     }
 }
@@ -158,12 +136,15 @@ private fun HomeTopSection(
         modifier = Modifier
             .fillMaxWidth()
             .background(HomeBackground)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(
+                horizontal = AppDimens.ScreenHorizontal,
+                vertical = AppDimens.Space14
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
+                .padding(top = AppDimens.Space8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -174,7 +155,7 @@ private fun HomeTopSection(
                     color = HomeTextPrimary
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(AppDimens.Space4))
 
                 Text(
                     text = "Korean beauty marketplace",
@@ -187,7 +168,7 @@ private fun HomeTopSection(
                 modifier = Modifier
                     .clip(CircleShape)
                     .background(Color.White)
-                    .padding(10.dp),
+                    .padding(AppDimens.Space10),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -198,13 +179,13 @@ private fun HomeTopSection(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(AppDimens.Space16))
 
         SearchBarFake(onClick = onSearchClick)
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         if (banners.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(AppDimens.Space16))
+
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxWidth()
@@ -212,7 +193,7 @@ private fun HomeTopSection(
                 PromoBanner(banner = banners[page])
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space10))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -221,13 +202,19 @@ private fun HomeTopSection(
                 repeat(banners.size) { index ->
                     Box(
                         modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .height(8.dp)
-                            .width(if (pagerState.currentPage == index) 22.dp else 8.dp)
+                            .padding(horizontal = AppDimens.Space4)
+                            .height(AppDimens.HomeBannerIndicatorHeight)
+                            .width(
+                                if (pagerState.currentPage == index) {
+                                    AppDimens.HomeBannerIndicatorActiveWidth
+                                } else {
+                                    AppDimens.HomeBannerIndicatorInactiveWidth
+                                }
+                            )
                             .clip(RoundedCornerShape(50))
                             .background(
                                 if (pagerState.currentPage == index) HomePrimary
-                                else Color(0xFFD7DCE8)
+                                else HomeIndicatorInactive
                             )
                     )
                 }
@@ -243,15 +230,18 @@ private fun SearchBarFake(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(AppDimens.HomeSearchBarCornerRadius))
             .clickable(onClick = onClick),
         color = Color.White,
-        shadowElevation = 2.dp
+        shadowElevation = AppDimens.Space2
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
+                .padding(
+                    horizontal = AppDimens.Space14,
+                    vertical = AppDimens.Space14
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -260,7 +250,7 @@ private fun SearchBarFake(
                 tint = HomeTextSecondary
             )
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(AppDimens.Space10))
 
             Text(
                 text = "Search skincare, serum, cream...",
@@ -278,11 +268,9 @@ private fun PromoBanner(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                brush = Brush.horizontalGradient(banner.colors)
-            )
-            .padding(20.dp)
+            .clip(RoundedCornerShape(AppDimens.HomeBannerCornerRadius))
+            .background(brush = Brush.horizontalGradient(banner.colors))
+            .padding(AppDimens.Space20)
     ) {
         Column {
             Text(
@@ -292,7 +280,7 @@ private fun PromoBanner(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space8))
 
             Text(
                 text = banner.subtitle,
@@ -300,13 +288,16 @@ private fun PromoBanner(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space14))
 
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .background(Color.White.copy(alpha = 0.18f))
-                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                    .padding(
+                        horizontal = AppDimens.Space14,
+                        vertical = AppDimens.Space8
+                    )
             ) {
                 Text(
                     text = "Shop now",
@@ -323,42 +314,48 @@ private fun CategorySection(
     categories: List<CategoryUi>
 ) {
     Column(
-        modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
     ) {
         AppSectionTitle(
             title = "Categories",
             subtitle = "Browse by type",
             titleColor = HomeTextPrimary,
             subtitleColor = HomeTextSecondary,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = AppDimens.ScreenHorizontal)
         )
 
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(horizontal = AppDimens.ScreenHorizontal),
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12)
         ) {
-            items(categories) { category ->
+            items(
+                items = categories,
+                key = { it.title }
+            ) { category ->
                 Surface(
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(AppDimens.HomeCategoryCardCornerRadius),
                     color = Color.White,
-                    tonalElevation = 1.dp
+                    tonalElevation = AppDimens.Space2
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier = Modifier.padding(
+                            horizontal = AppDimens.Space16,
+                            vertical = AppDimens.Space12
+                        ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(HomeSoftBlue)
-                                .padding(12.dp),
+                                .padding(AppDimens.Space12),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(text = category.iconEmoji)
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(AppDimens.Space8))
 
                         Text(
                             text = category.title,
@@ -374,18 +371,46 @@ private fun CategorySection(
 }
 
 @Composable
+private fun ProductShowcaseSection(
+    title: String,
+    subtitle: String,
+    products: List<Product>,
+    onProductClick: (String) -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+    ) {
+        AppSectionTitle(
+            title = title,
+            subtitle = subtitle,
+            titleColor = HomeTextPrimary,
+            subtitleColor = HomeTextSecondary,
+            modifier = Modifier.padding(horizontal = AppDimens.ScreenHorizontal)
+        )
+
+        HorizontalProductSection(
+            products = products,
+            onProductClick = onProductClick
+        )
+    }
+}
+
+@Composable
 private fun HorizontalProductSection(
     products: List<Product>,
     onProductClick: (String) -> Unit
 ) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(horizontal = AppDimens.ScreenHorizontal),
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12)
     ) {
-        items(products) { product ->
+        items(
+            items = products,
+            key = { it.id }
+        ) { product ->
             Box(
-                modifier = Modifier.width(210.dp)
+                modifier = Modifier.width(AppDimens.HomeHorizontalCardWidth)
             ) {
                 VerticalProductCard(
                     product = product,
@@ -401,18 +426,22 @@ private fun RecommendedGridSection(
     products: List<Product>,
     onProductClick: (String) -> Unit
 ) {
+    val safeProducts = products.take(AppDimens.HomeRecommendedMaxItems)
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
-            .height(((products.size + 1) / 2 * 320).dp)
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .height(AppDimens.HomeRecommendedGridHeight)
+            .padding(horizontal = AppDimens.ScreenHorizontal),
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12),
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12),
         userScrollEnabled = false
     ) {
-        items(products) { product ->
+        items(
+            items = safeProducts,
+            key = { it.id }
+        ) { product ->
             VerticalProductCard(
                 product = product,
                 onClick = { onProductClick(product.id) }

@@ -1,6 +1,6 @@
 package com.example.sabinacosmeticapplication.data.model
 
-import retrofit2.http.Url
+import androidx.annotation.DrawableRes
 
 data class Product(
     val id: String,
@@ -11,9 +11,18 @@ data class Product(
     val priceValue: Int,
     val oldPrice: String? = null,
     val discountLabel: String? = null,
-    val imageUrl: String,
+    val imageUrl: String = "",
+    @DrawableRes val imageRes: Int? = null,
     val description: String,
     val isFlashSale: Boolean = false,
     val isBestSeller: Boolean = false
+) {
+    val hasRemoteImage: Boolean
+        get() = imageUrl.isNotBlank()
 
-)
+    val hasLocalImage: Boolean
+        get() = imageRes != null
+
+    val hasAnyImage: Boolean
+        get() = hasRemoteImage || hasLocalImage
+}

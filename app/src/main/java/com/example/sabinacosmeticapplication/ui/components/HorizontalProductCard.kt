@@ -1,13 +1,12 @@
 package com.example.sabinacosmeticapplication.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
@@ -15,6 +14,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,34 +38,38 @@ fun HorizontalProductCard(
             containerColor = AppColors.Surface
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = AppDimens.Space4
+            defaultElevation = AppDimens.CardElevation
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppDimens.Space14)
+                .padding(AppDimens.ProductCardOuterPadding),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            ProductImage(
-                imageUrl = product.imageUrl,
-                contentDescription = product.title,
-                size = AppDimens.ProductImageMedium
-            )
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+                ProductImage(
+                    imageUrl = product.imageUrl,
+                    imageRes = product.imageRes,
+                    contentDescription = product.title,
+                    size = AppDimens.ProductImageMedium,
+                    badgeText = product.category
+                )
+            }
 
-            Spacer(modifier = Modifier.width(AppDimens.Space12))
+            Box(modifier = Modifier.width(AppDimens.ProductCardImageSpacing))
 
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(AppDimens.Space6)
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = AppDimens.HorizontalProductCardContentMinHeight),
+                verticalArrangement = Arrangement.spacedBy(AppDimens.ProductCardContentSpacing)
             ) {
-                if (product.brand.isNotBlank()) {
-                    Text(
-                        text = product.brand,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = AppColors.SecondaryText
-                        )
-                    )
-                }
+                ProductBrandText(
+                    brand = product.brand
+                )
 
                 Text(
                     text = product.title,
@@ -74,6 +78,7 @@ fun HorizontalProductCard(
                         fontWeight = FontWeight.SemiBold
                     ),
                     maxLines = 2,
+                    minLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
@@ -89,23 +94,10 @@ fun HorizontalProductCard(
                     discountLabel = product.discountLabel
                 )
 
-                if (product.isBestSeller) {
-                    Text(
-                        text = "Best Seller",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = AppColors.DiscountBadgeText,
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                } else if (product.isFlashSale) {
-                    Text(
-                        text = "Flash Sale",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = AppColors.DiscountBadgeText,
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                }
+                ProductStatusBadge(
+                    isBestSeller = product.isBestSeller,
+                    isFlashSale = product.isFlashSale
+                )
             }
         }
     }

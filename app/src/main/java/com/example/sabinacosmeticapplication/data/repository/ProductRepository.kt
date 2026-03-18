@@ -6,4 +6,5 @@ interface ProductRepository {
     fun getAllProducts(): List<Product>
     fun getProductById(productId: String): Product?
     fun searchProducts(query: String): List<Product>
+    fun getProductsByCategory(category: String): List<Product>
 }

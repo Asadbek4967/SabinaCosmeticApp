@@ -7,14 +7,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -44,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
 import com.example.sabinacosmeticapplication.ui.components.HorizontalProductCard
+import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.BorderSoft
-import com.example.sabinacosmeticapplication.ui.theme.FlashSaleColor
 import com.example.sabinacosmeticapplication.ui.theme.SearchBackground
 import com.example.sabinacosmeticapplication.ui.theme.SearchHintText
 import com.example.sabinacosmeticapplication.ui.theme.SearchSecondaryText
@@ -53,15 +52,9 @@ import com.example.sabinacosmeticapplication.ui.theme.SurfaceWhite
 import com.example.sabinacosmeticapplication.ui.theme.TextPrimary
 
 private val SearchAccent = Color(0xFF4D6BFE)
-private val SearchImageBackground = Color(0xFFF1F4FB)
 private val SearchChipBackground = Color(0xFFF3F6FB)
 private val SearchClearButtonBackground = Color(0xFFF0F2F5)
 private val RecentRemoveBackground = Color(0xFFF3F4F6)
-
-private val BestSellerBackground = Color(0xFFFFF1E8)
-private val BestSellerText = Color(0xFFFF7A00)
-
-private val FlashSaleBackground = Color(0xFFFFEEF1)
 
 private val SearchFieldShape = RoundedCornerShape(20.dp)
 private val SearchRecentCardShape = RoundedCornerShape(18.dp)
@@ -76,14 +69,12 @@ fun SearchScreen(
     onPopularKeywordClick: (String) -> Unit,
     onRemoveRecentSearch: (String) -> Unit,
     onProductClick: (String) -> Unit,
-    padding: PaddingValues = PaddingValues(0.dp),
+    padding: PaddingValues = PaddingValues(),
     snackbarHostState: SnackbarHostState
 ) {
     Scaffold(
         containerColor = SearchBackground,
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -91,13 +82,14 @@ fun SearchScreen(
                 .background(SearchBackground)
                 .padding(innerPadding)
                 .padding(padding)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .padding(
+                    horizontal = AppDimens.ScreenHorizontal,
+                    vertical = AppDimens.Space14
+                )
         ) {
             SearchHeader()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space16))
 
             SearchInputBar(
                 query = uiState.query,
@@ -106,7 +98,7 @@ fun SearchScreen(
                 onClearQuery = onClearQuery
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space16))
 
             when {
                 uiState.isLoading -> {
@@ -152,7 +144,7 @@ private fun SearchHeader() {
             text = "Find your favorite Korean skincare products",
             style = MaterialTheme.typography.bodyMedium,
             color = SearchSecondaryText,
-            modifier = Modifier.padding(top = 4.dp)
+            modifier = Modifier.padding(top = AppDimens.Space4)
         )
     }
 }
@@ -178,9 +170,7 @@ private fun SearchInputBar(
                 color = SearchHintText
             )
         },
-        textStyle = MaterialTheme.typography.bodyMedium.copy(
-            color = TextPrimary
-        ),
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
         leadingIcon = {
             Icon(
                 imageVector = Icons.Outlined.Search,
@@ -192,7 +182,7 @@ private fun SearchInputBar(
             if (query.isNotBlank()) {
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(AppDimens.SearchClearButtonSize)
                         .clip(CircleShape)
                         .background(SearchClearButtonBackground)
                         .clickable(onClick = onClearQuery),
@@ -202,7 +192,7 @@ private fun SearchInputBar(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Clear search",
                         tint = SearchSecondaryText,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(AppDimens.SearchClearIconSize)
                     )
                 }
             }
@@ -232,8 +222,8 @@ private fun SearchDiscoveryContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = PaddingValues(bottom = 24.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space20),
+        contentPadding = PaddingValues(bottom = AppDimens.Space24)
     ) {
         if (recentSearches.isNotEmpty()) {
             item {
@@ -279,8 +269,8 @@ private fun SearchResultContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        contentPadding = PaddingValues(bottom = 24.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space14),
+        contentPadding = PaddingValues(bottom = AppDimens.Space24)
     ) {
         item {
             Text(
@@ -310,41 +300,44 @@ private fun RecentSearchSection(
     onRemoveRecentSearch: (String) -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space10)
     ) {
         recentSearches.forEach { keyword ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = SearchRecentCardShape,
                 colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.Space2)
             ) {
-                androidx.compose.foundation.layout.Row(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onRecentSearchClick(keyword) }
-                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                        .padding(
+                            horizontal = AppDimens.Space14,
+                            vertical = AppDimens.Space14
+                        ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Search,
                         contentDescription = null,
                         tint = SearchSecondaryText,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(AppDimens.SearchRecentLeadingIconSize)
                     )
 
                     Text(
                         text = keyword,
                         modifier = Modifier
                             .weight(1f)
-                            .padding(start = 10.dp),
+                            .padding(start = AppDimens.Space10),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextPrimary
                     )
 
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(AppDimens.SearchRecentRemoveButtonSize)
                             .clip(CircleShape)
                             .background(RecentRemoveBackground)
                             .clickable { onRemoveRecentSearch(keyword) },
@@ -354,7 +347,7 @@ private fun RecentSearchSection(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Remove recent search",
                             tint = SearchSecondaryText,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(AppDimens.SearchRecentRemoveIconSize)
                         )
                     }
                 }
@@ -369,8 +362,8 @@ private fun PopularKeywordSection(
     onKeywordClick: (String) -> Unit
 ) {
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space10),
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space10)
     ) {
         keywords.forEach { keyword ->
             Surface(
@@ -380,7 +373,10 @@ private fun PopularKeywordSection(
             ) {
                 Text(
                     text = keyword,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(
+                        horizontal = AppDimens.Space16,
+                        vertical = AppDimens.Space10
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextPrimary,
                     fontWeight = FontWeight.SemiBold
@@ -415,7 +411,7 @@ private fun SearchEmptyState(query: String) {
                 style = MaterialTheme.typography.displaySmall
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space12))
 
             Text(
                 text = "No results for \"$query\"",
@@ -424,7 +420,7 @@ private fun SearchEmptyState(query: String) {
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(AppDimens.Space6))
 
             Text(
                 text = "Try another product name, brand, or category",
