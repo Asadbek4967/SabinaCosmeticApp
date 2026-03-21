@@ -1,4 +1,4 @@
-package com.example.sabinacosmeticapplication.data.local.cart
+package com.example.sabinacosmeticapplication.data.local.l
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
