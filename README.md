@@ -1,3 +1,30 @@
+## 📱 Screenshots
+
+### 🏠 Home
+
+![Home](home.jpg)
+
+### 🏠 Home (Extra)
+
+![Home2](home2.jpg)
+
+### 📂 Categories
+
+![Categories](categories.jpg)
+
+### 🔍 Search
+
+![Search](search.jpg)
+
+### 🛒 Cart
+
+![Cart](cart.jpg)
+
+### 👤 Profile
+
+![Profile](profile.jpg)
+
+
 # Sabina Cosmetic App
 
 Sabina Cosmetic App is an Android beauty shopping application built using **Kotlin** and **Jetpack Compose**.
