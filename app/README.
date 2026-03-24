@@ -1,0 +1,132 @@
+# Sabina Cosmetic Application
+
+A modern Android cosmetic shopping application built with **Kotlin** and **Jetpack Compose**, designed with a clean and scalable architecture.
+This project focuses on delivering a polished shopping experience for beauty products, including product browsing, category discovery, search, product detail, and cart management.
+
+## Overview
+
+Sabina Cosmetic Application is a mobile e-commerce app concept for a Korean beauty marketplace.
+The project is being developed with a strong focus on:
+
+- modern Android development
+- clean architecture
+- scalable code structure
+- reusable UI components
+- local cart persistence
+- production-ready project organization
+
+The app currently includes the core shopping flow from home screen to cart interaction.
+
+---
+
+## Features Implemented
+
+### Home Screen
+- clean modern landing screen
+- promotional banner section
+- category preview section
+- flash sale / featured product section
+- product navigation support
+- search entry point
+
+### Categories Screen
+- category-based product browsing
+- clean card-based category UI
+- navigation to category product list
+
+### Search Screen
+- product search input
+- recent search history support
+- popular keyword section
+- filtered product result list
+- navigation to product detail
+
+### Product Detail Screen
+- product image
+- brand, title, category, and pricing
+- discount / label support
+- product description
+- add-to-cart action
+- navigation back support
+
+### Cart System
+- add products to cart
+- increase / decrease quantity
+- remove item from cart
+- restore removed item
+- clear cart
+- total item count
+- total price calculation
+- empty cart state
+- cart badge in bottom navigation
+- cart data stored locally using Room database
+
+### My Page
+- account-style profile screen
+- quick actions layout
+- settings/help style sections
+
+---
+
+## Tech Stack
+
+### Language
+- **Kotlin**
+
+### UI
+- **Jetpack Compose**
+- Material 3
+- Compose Navigation
+
+### Architecture
+- **Clean Architecture**
+- **MVVM**
+- feature-based package structure
+
+### Dependency Injection
+- **Hilt**
+
+### Local Storage
+- **Room Database**
+
+### Async / Reactive
+- Kotlin Coroutines
+- StateFlow
+- Flow
+
+### Image Loading
+- **Coil**
+
+---
+
+## Project Architecture
+
+This project is organized using a scalable layered architecture:
+
+```text
+com.example.sabinacosmeticapplication
+├── core
+├── data
+│   ├── local
+│   ├── mapper
+│   ├── model
+│   ├── remote
+│   └── repository
+├── di
+├── domain
+│   ├── model
+│   ├── repository
+│   └── usecase
+├── feature
+│   ├── home
+│   ├── categories
+│   ├── categoryproducts
+│   ├── search
+│   ├── productdetail
+│   ├── cart
+│   └── my
+└── navigation
+
+**Asadbek Matyaqubov**
+
+Android Developer
