@@ -1,4 +1,4 @@
-package com.example.sabinacosmeticapplication.ui.components
+package com.example.sabinacosmeticapplication.ui.components.product
 
 fun productCategoryEmoji(category: String): String {
     return when (category.trim().lowercase()) {

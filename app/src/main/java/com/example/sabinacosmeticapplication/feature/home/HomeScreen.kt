@@ -38,8 +38,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.example.sabinacosmeticapplication.data.model.Product
-import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
-import com.example.sabinacosmeticapplication.ui.components.VerticalProductCard
+import com.example.sabinacosmeticapplication.ui.components.common.AppSectionTitle
+import com.example.sabinacosmeticapplication.ui.components.product.VerticalProductCard
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 
 private val HomeBackground = Color(0xFFF6F7FB)

@@ -5,5 +5,6 @@ import com.example.sabinacosmeticapplication.data.model.Product
 data class CategoryProductsUiState(
     val categoryName: String = "",
     val products: List<Product> = emptyList(),
-    val isLoading: Boolean = true
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
 )

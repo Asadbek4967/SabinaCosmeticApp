@@ -25,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.sabinacosmeticapplication.data.model.Product
-import com.example.sabinacosmeticapplication.ui.components.AppTopBar
-import com.example.sabinacosmeticapplication.ui.components.VerticalProductCard
+import com.example.sabinacosmeticapplication.ui.components.common.AppTopBar
+import com.example.sabinacosmeticapplication.ui.components.product.VerticalProductCard
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.AppShapes

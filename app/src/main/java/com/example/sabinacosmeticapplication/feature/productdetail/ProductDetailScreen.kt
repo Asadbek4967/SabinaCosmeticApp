@@ -42,13 +42,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
-import com.example.sabinacosmeticapplication.ui.components.AppTopBar
-import com.example.sabinacosmeticapplication.ui.components.ProductBadge
-import com.example.sabinacosmeticapplication.ui.components.ProductImage
-import com.example.sabinacosmeticapplication.ui.components.ProductPriceBlock
-import com.example.sabinacosmeticapplication.ui.components.ProductStatusBadge
+import com.example.sabinacosmeticapplication.ui.components.common.AppSectionTitle
+import com.example.sabinacosmeticapplication.ui.components.common.AppTopBar
+import com.example.sabinacosmeticapplication.ui.components.product.ProductBadge
+import com.example.sabinacosmeticapplication.ui.components.product.ProductImage
+import com.example.sabinacosmeticapplication.ui.components.product.ProductPriceBlock
+import com.example.sabinacosmeticapplication.ui.components.product.ProductStatusBadge
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.AppShapes
@@ -58,7 +59,7 @@ fun ProductDetailScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onCartClick: () -> Unit,
-    viewModel: ProductDetailViewModel
+    viewModel: ProductDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -66,7 +67,7 @@ fun ProductDetailScreen(
     LaunchedEffect(uiState.isAddedToCart) {
         if (uiState.isAddedToCart) {
             snackbarHostState.showSnackbar(
-                message = "Mahsulot savatchaga qo‘shildi",
+                message = "Product added to cart",
                 duration = SnackbarDuration.Short
             )
             viewModel.consumeAddedToCartState()
@@ -98,7 +99,7 @@ fun ProductDetailScreen(
             uiState.product?.let { product ->
                 ProductDetailBottomBar(
                     price = product.price,
-                    onAddToCartClick = { viewModel.addToCart() }
+                    onAddToCartClick = viewModel::addToCart
                 )
             }
         }
@@ -123,7 +124,7 @@ fun ProductDetailScreen(
 
             else -> {
                 ProductDetailError(
-                    message = uiState.errorMessage ?: "Noma’lum xatolik",
+                    message = uiState.errorMessage ?: "Unknown error",
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
@@ -201,7 +202,6 @@ private fun ProductDetailContent(
             ) {
                 ProductImage(
                     imageUrl = product.imageUrl,
-                    imageRes = product.imageRes,
                     contentDescription = product.title,
                     size = AppDimens.ProductImageXL,
                     badgeText = product.category

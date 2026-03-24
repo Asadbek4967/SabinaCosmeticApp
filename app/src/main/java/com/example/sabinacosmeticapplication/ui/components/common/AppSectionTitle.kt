@@ -1,4 +1,4 @@
-package com.example.sabinacosmeticapplication.ui.components
+package com.example.sabinacosmeticapplication.ui.components.common
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth

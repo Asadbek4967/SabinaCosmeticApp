@@ -4,10 +4,10 @@ import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.domain.repository.ProductRepository
 import javax.inject.Inject
 
-class SearchProductsUseCase @Inject constructor(
+class GetProductsByCategoryUseCase @Inject constructor(
     private val repository: ProductRepository
 ) {
-    suspend operator fun invoke(query: String): List<Product> {
-        return repository.searchProducts(query)
+    suspend operator fun invoke(category: String): List<Product> {
+        return repository.getProductsByCategory(category)
     }
 }

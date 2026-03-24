@@ -41,8 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sabinacosmeticapplication.data.model.Product
-import com.example.sabinacosmeticapplication.ui.components.AppSectionTitle
-import com.example.sabinacosmeticapplication.ui.components.HorizontalProductCard
+import com.example.sabinacosmeticapplication.ui.components.common.AppSectionTitle
+import com.example.sabinacosmeticapplication.ui.components.product.HorizontalProductCard
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.BorderSoft
 import com.example.sabinacosmeticapplication.ui.theme.SearchBackground

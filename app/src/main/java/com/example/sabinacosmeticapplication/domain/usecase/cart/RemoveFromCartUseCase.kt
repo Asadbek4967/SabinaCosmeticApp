@@ -1,6 +1,6 @@
-package com.example.sabinacosmeticapplication.domain.usecase
+package com.example.sabinacosmeticapplication.domain.usecase.cart
 
-import com.example.sabinacosmeticapplication.feature.cart.CartRepository
+import com.example.sabinacosmeticapplication.domain.repository.CartRepository
 import javax.inject.Inject
 
 class RemoveFromCartUseCase @Inject constructor(

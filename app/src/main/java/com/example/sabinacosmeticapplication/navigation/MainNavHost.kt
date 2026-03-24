@@ -11,18 +11,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.sabinacosmeticapplication.feature.cart.CartRoute
 import com.example.sabinacosmeticapplication.feature.cart.CartViewModel
 import com.example.sabinacosmeticapplication.feature.categories.CategoriesScreen
@@ -68,12 +67,12 @@ private fun NavHostController.navigateToCategoryProducts(category: String) {
 @Composable
 fun MainNavHost() {
     val navController = rememberNavController()
+
     val cartViewModel: CartViewModel = hiltViewModel()
     val cartUiState by cartViewModel.uiState.collectAsStateWithLifecycle()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-
     val showBottomBar = currentDestination.shouldShowBottomBar()
 
     Scaffold(
@@ -81,7 +80,7 @@ fun MainNavHost() {
             if (showBottomBar) {
                 MainBottomBar(
                     currentDestination = currentDestination,
-                    cartItemCount = cartUiState.itemCount,
+                    cartItemCount = cartUiState.totalItemCount,
                     onItemClick = { route ->
                         navController.navigateToBottomRoute(route)
                     }
@@ -124,24 +123,21 @@ fun MainNavHost() {
             }
 
             composable(BottomRoute.My.route) {
-                MyScreen(padding = innerPadding)
+                MyScreen(
+                    padding = innerPadding
+                )
             }
 
             composable(BottomRoute.Cart.route) {
                 CartRoute(
                     padding = innerPadding,
-                    viewModel = cartViewModel
+                    onCheckoutClick = {
+                        // Checkout screen qo‘shilganda shu yerga navigate yoziladi
+                    }
                 )
             }
 
-            composable(
-                route = "$CATEGORY_PRODUCTS_ROUTE/{$CATEGORY_ARG}",
-                arguments = listOf(
-                    navArgument(CATEGORY_ARG) {
-                        type = NavType.StringType
-                    }
-                )
-            ) {
+            composable(route = "$CATEGORY_PRODUCTS_ROUTE/{$CATEGORY_ARG}") {
                 CategoryProductsRoute(
                     padding = innerPadding,
                     onBackClick = {
@@ -153,14 +149,7 @@ fun MainNavHost() {
                 )
             }
 
-            composable(
-                route = "$PRODUCT_DETAIL_ROUTE/{$PRODUCT_ID_ARG}",
-                arguments = listOf(
-                    navArgument(PRODUCT_ID_ARG) {
-                        type = NavType.StringType
-                    }
-                )
-            ) {
+            composable(route = "$PRODUCT_DETAIL_ROUTE/{$PRODUCT_ID_ARG}") {
                 ProductDetailRoute(
                     padding = innerPadding,
                     onBackClick = {
@@ -219,7 +208,7 @@ private fun MainBottomBar(
 @Composable
 private fun BottomBarIcon(
     route: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
     cartItemCount: Int
 ) {
@@ -231,11 +220,7 @@ private fun BottomBarIcon(
             badge = {
                 Badge {
                     Text(
-                        text = if (cartItemCount > 99) {
-                            "99+"
-                        } else {
-                            cartItemCount.toString()
-                        }
+                        text = if (cartItemCount > 99) "99+" else cartItemCount.toString()
                     )
                 }
             }

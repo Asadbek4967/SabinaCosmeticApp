@@ -2,7 +2,7 @@ package com.example.sabinacosmeticapplication.feature.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sabinacosmeticapplication.domain.usecase.SearchProductsUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.product.SearchProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -46,6 +46,12 @@ class SearchViewModel @Inject constructor(
 
     private fun handleQueryChanged(newQuery: String) {
         _uiState.value = _uiState.value.copy(query = newQuery)
+
+        if (newQuery.isBlank()) {
+            clearQuery()
+            return
+        }
+
         performSearch(newQuery)
     }
 
@@ -69,17 +75,17 @@ class SearchViewModel @Inject constructor(
                 errorMessage = null
             )
 
-            try {
-                val results = searchProductsUseCase(trimmedQuery)
-
+            runCatching {
+                searchProductsUseCase(trimmedQuery)
+            }.onSuccess { results ->
                 _uiState.value = _uiState.value.copy(
                     results = results,
                     isLoading = false,
                     recentSearches = updateRecentSearches(trimmedQuery),
                     errorMessage = null
                 )
-            } catch (e: Exception) {
-                val message = e.message ?: "Search failed"
+            }.onFailure { throwable ->
+                val message = throwable.message ?: "Search failed"
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,

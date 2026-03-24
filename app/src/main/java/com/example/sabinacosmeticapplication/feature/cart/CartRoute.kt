@@ -1,21 +1,28 @@
 package com.example.sabinacosmeticapplication.feature.cart
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun CartRoute(
     padding: PaddingValues,
-    onBackClick: () -> Unit = {},
-    onCheckoutClick: () -> Unit = {},
-    viewModel: CartViewModel
+    onCheckoutClick: () -> Unit
 ) {
+    val viewModel: CartViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     CartScreen(
-        modifier = Modifier.padding(padding),
-        onBackClick = onBackClick,
-        onCheckoutClick = onCheckoutClick,
-        viewModel = viewModel
+        padding = padding,
+        uiState = uiState,
+        onIncreaseQuantity = viewModel::increaseQuantity,
+        onDecreaseQuantity = viewModel::decreaseQuantity,
+        onRemoveItem = viewModel::removeItem,
+        onRestoreLastRemovedItem = viewModel::restoreLastRemovedItem,
+        onClearLastRemovedItem = viewModel::clearLastRemovedItem,
+        onClearCart = viewModel::clearCart,
+        onCheckoutClick = onCheckoutClick
     )
 }

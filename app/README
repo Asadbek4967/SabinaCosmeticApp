@@ -1,126 +1,99 @@
-# Sabina Cosmetic App
+# Sabina Cosmetic Application
 
-Sabina Cosmetic App is an Android beauty shopping application built using **Kotlin** and **Jetpack Compose**.
+A modern Android cosmetic shopping application built with **Kotlin** and **Jetpack Compose**, designed with a clean UI and scalable architecture in mind.
 
-The application allows users to browse Korean cosmetic products, search products, view detailed product information, and manage a persistent shopping cart with a modern and responsive UI.
-
-This project is being developed as a **modern Android architecture practice project**, focusing on real-world e-commerce app structure.
+This project is being developed as a professional portfolio-level Android application, focusing not only on UI design but also on **real-world app architecture**, **state management**, **local persistence**, and **maintainability**.
 
 ---
 
-# Features
+## Overview
 
-## Product Browsing
-- Browse Korean cosmetic products
-- Flash sale section
-- Category browsing
-- Promotional banner slider
+The goal of this project is to build a modern cosmetic e-commerce application that provides a smooth and attractive shopping experience for users.
 
-## Product Detail
-- Product image preview
-- Brand and category information
-- Discount price calculation
-- Product rating and review count
-- Add to cart button
+The application currently includes:
 
-## Search System
-- Product search by keyword
-- Recent search suggestions
-- Popular keyword suggestions
-- Live search results
+- Product browsing UI
+- Product detail screen
+- Cart system
+- Local cart persistence
+- Modern Compose-based UI
+- Structured project architecture for future backend integration
 
-## Cart System
-- Add product to cart
-- Increase / decrease quantity
-- Remove individual item
-- Clear all cart items
-- Subtotal and total calculation
-- Checkout section UI
-- Cart badge synchronization
-- Empty cart state
-
-## Persistent Cart (Room Database)
-- Cart items are stored locally using **Room**
-- Cart state persists even after app restart
-- Database-backed cart system
+This project is being improved step by step with a production-oriented mindset.
 
 ---
 
-# Architecture
+## Features Implemented
 
-The project follows **MVVM architecture** with clear separation of concerns.
+### UI / UX
+- Modern home screen design
+- Product cards with image, price, discount, and brand/category information
+- Product detail screen
+- Bottom navigation
+- Cart screen UI
+- Empty cart state UI
+- Professional color styling and component-based Compose structure
 
-UI Layer
-Jetpack Compose screens and state observation
+### Cart System
+- Add to cart flow architecture
+- Quantity increase / decrease
+- Remove item from cart
+- Total price calculation
+- Cart item count handling
+- StateFlow-based cart state management
 
-ViewModel Layer
-Handles UI state and business logic
+### Architecture / Engineering
+- Clean and scalable package structure
+- MVVM architecture
+- Repository pattern
+- Dependency injection with **Hilt**
+- Local database with **Room**
+- Reactive UI updates using **StateFlow**
+- Compose-first UI implementation
 
-Repository Layer
-Manages data flow between UI and database
-
-Data Layer
-Room Database for persistent cart storage
-
----
-
-# Tech Stack
-
-- Kotlin
-- Jetpack Compose
-- Material 3
-- MVVM Architecture
-- StateFlow / Flow
-- Navigation Compose
-- Room Database
-- Repository Pattern
-
----
-
-# Project Structure
-
-
-
+### Persistence
+- Cart data stored locally using Room
+- Data remains available after app restarts
+- Local-first structure prepared for future API integration
 
 ---
 
-# Screens
+## Tech Stack
 
-- Home Screen
-- Search Screen
-- Product Detail Screen
-- Cart Screen
-- Categories Screen
-- My Page Screen
-
----
-
-# Current Development Progress
-
-✔ Home screen UI
-✔ Product list and categories
-✔ Product detail screen
-✔ Search system
-✔ Cart system
-✔ Cart badge synchronization
-✔ Quantity controls
-✔ Clear cart dialog
-✔ Empty cart UI
-✔ Room database persistence for cart
+- **Kotlin**
+- **Jetpack Compose**
+- **Material 3**
+- **MVVM Architecture**
+- **Hilt**
+- **Room Database**
+- **StateFlow / Coroutines**
+- **Navigation Compose**
 
 ---
 
-# Author
+## Project Structure
 
-**Asadbek Matyaqubov**
-
-Android Developer
-
-
-## Future Improvements
-
-- Remote API integration
-- Authentication
-- Payment integration
-- Product reviews
-- Wishlist system
+```text
+com.example.sabinacosmeticapplication
+│
+├── data
+│   ├── local
+│   ├── model
+│   ├── repository
+│
+├── domain
+│   ├── model
+│   ├── repository
+│
+├── feature
+│   ├── home
+│   ├── productdetail
+│   ├── cart
+│
+├── navigation
+│
+├── di
+│
+└── ui
+    ├── components
+    └── theme

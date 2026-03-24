@@ -3,8 +3,9 @@ package com.example.sabinacosmeticapplication.feature.productdetail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sabinacosmeticapplication.domain.usecase.AddToCartUseCase
-import com.example.sabinacosmeticapplication.domain.usecase.GetProductByIdUseCase
+import com.example.sabinacosmeticapplication.data.mapper.toCartItem
+import com.example.sabinacosmeticapplication.domain.usecase.cart.AddToCartUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.product.GetProductByIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,53 +20,50 @@ class ProductDetailViewModel @Inject constructor(
     private val addToCartUseCase: AddToCartUseCase
 ) : ViewModel() {
 
-    private val productId: String = checkNotNull(savedStateHandle["productId"])
-
-    private val _uiState = MutableStateFlow(
-        ProductDetailUiState(isLoading = true)
-    )
+    private val _uiState = MutableStateFlow(ProductDetailUiState(isLoading = true))
     val uiState: StateFlow<ProductDetailUiState> = _uiState.asStateFlow()
+
+    private val productId: String = checkNotNull(savedStateHandle["productId"])
 
     init {
         loadProduct()
     }
 
-    private fun loadProduct() {
-        val product = getProductByIdUseCase(productId)
-
-        _uiState.value = if (product != null) {
-            ProductDetailUiState(
-                isLoading = false,
-                product = product,
-                isAddedToCart = false,
+    fun loadProduct() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
                 errorMessage = null
             )
-        } else {
-            ProductDetailUiState(
-                isLoading = false,
-                product = null,
-                isAddedToCart = false,
-                errorMessage = "Product topilmadi"
-            )
+
+            runCatching {
+                getProductByIdUseCase(productId)
+            }.onSuccess { product ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    product = product,
+                    errorMessage = null
+                )
+            }.onFailure { throwable ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    product = null,
+                    errorMessage = throwable.message ?: "Failed to load product"
+                )
+            }
         }
     }
 
     fun addToCart() {
-        val currentProduct = _uiState.value.product ?: return
+        val product = _uiState.value.product ?: return
 
         viewModelScope.launch {
-            addToCartUseCase(currentProduct.id)
-            _uiState.value = _uiState.value.copy(
-                isAddedToCart = true
-            )
+            addToCartUseCase(product.toCartItem())
+            _uiState.value = _uiState.value.copy(isAddedToCart = true)
         }
     }
 
     fun consumeAddedToCartState() {
-        if (_uiState.value.isAddedToCart) {
-            _uiState.value = _uiState.value.copy(
-                isAddedToCart = false
-            )
-        }
+        _uiState.value = _uiState.value.copy(isAddedToCart = false)
     }
 }

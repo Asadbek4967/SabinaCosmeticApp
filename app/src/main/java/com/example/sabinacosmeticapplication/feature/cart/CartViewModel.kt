@@ -2,72 +2,116 @@ package com.example.sabinacosmeticapplication.feature.cart
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.sabinacosmeticapplication.domain.model.CartItem
+import com.example.sabinacosmeticapplication.domain.usecase.cart.AddToCartUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.cart.ClearCartUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.cart.DecreaseCartItemQuantityUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.cart.GetCartItemsUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.cart.IncreaseCartItemQuantityUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.cart.RemoveFromCartUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val repository: CartRepository
+    getCartItemsUseCase: GetCartItemsUseCase,
+    private val addToCartUseCase: AddToCartUseCase,
+    private val increaseCartItemQuantityUseCase: IncreaseCartItemQuantityUseCase,
+    private val decreaseCartItemQuantityUseCase: DecreaseCartItemQuantityUseCase,
+    private val removeFromCartUseCase: RemoveFromCartUseCase,
+    private val clearCartUseCase: ClearCartUseCase
 ) : ViewModel() {
 
-    val uiState: StateFlow<CartUiState> =
-        combine(
-            repository.cartItems,
-            repository.lastRemovedItem
-        ) { items, lastRemovedItem ->
-            CartUiState(
-                items = items,
-                totalPrice = items.sumOf { it.priceValue * it.quantity },
-                lastRemovedItem = lastRemovedItem
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = CartUiState()
-        )
+    private val lastRemovedItem = MutableStateFlow<CartItemUi?>(null)
 
-    fun addToCart(productId: String) {
-        viewModelScope.launch {
-            repository.addToCart(productId)
-        }
-    }
+    val uiState: StateFlow<CartUiState> = combine(
+        getCartItemsUseCase(),
+        lastRemovedItem
+    ) { cartItems, removedItem ->
+
+        val itemsUi = cartItems.map { it.toCartItemUi() }
+        val totalPrice = itemsUi.sumOf { it.totalItemPrice }
+        val totalItemCount = itemsUi.sumOf { it.quantity }
+
+        CartUiState(
+            items = itemsUi,
+            totalPrice = totalPrice,
+            totalItemCount = totalItemCount,
+            isEmpty = itemsUi.isEmpty(),
+            lastRemovedItem = removedItem
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = CartUiState()
+    )
 
     fun increaseQuantity(productId: String) {
         viewModelScope.launch {
-            repository.increaseQuantity(productId)
+            increaseCartItemQuantityUseCase(productId)
         }
     }
 
     fun decreaseQuantity(productId: String) {
         viewModelScope.launch {
-            repository.decreaseQuantity(productId)
+            decreaseCartItemQuantityUseCase(productId)
         }
     }
 
-    fun removeFromCart(productId: String) {
+    fun removeItem(item: CartItemUi) {
         viewModelScope.launch {
-            repository.removeFromCart(productId)
+            removeFromCartUseCase(item.productId)
+            lastRemovedItem.value = item
         }
     }
 
     fun restoreLastRemovedItem() {
+        val item = lastRemovedItem.value ?: return
+
         viewModelScope.launch {
-            repository.restoreLastRemovedItem()
+            addToCartUseCase(item.toDomain())
+            lastRemovedItem.value = null
         }
     }
 
     fun clearLastRemovedItem() {
-        repository.clearLastRemovedItem()
+        lastRemovedItem.value = null
     }
 
     fun clearCart() {
         viewModelScope.launch {
-            repository.clearCart()
+            clearCartUseCase()
+            lastRemovedItem.value = null
         }
+    }
+
+    private fun CartItem.toCartItemUi(): CartItemUi {
+        return CartItemUi(
+            productId = productId,
+            title = title,
+            brand = brand,
+            price = price,
+            priceValue = priceValue,
+            imageUrl = imageUrl,
+            quantity = quantity
+        )
+    }
+
+    private fun CartItemUi.toDomain(): CartItem {
+        return CartItem(
+            productId = productId,
+            title = title,
+            brand = brand,
+            price = price,
+            priceValue = priceValue,
+            imageUrl = imageUrl,
+            quantity = quantity
+        )
     }
 }

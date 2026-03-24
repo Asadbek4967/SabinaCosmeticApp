@@ -1,5 +1,6 @@
-package com.example.sabinacosmeticapplication.ui.components
+package com.example.sabinacosmeticapplication.ui.components.common
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -10,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 
@@ -31,8 +33,8 @@ fun AppTopBar(
                     color = AppColors.Primary
                 )
             } else {
-                androidx.compose.foundation.layout.Column(
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = title,

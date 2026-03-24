@@ -1,5 +1,6 @@
-package com.example.sabinacosmeticapplication.ui.components
+package com.example.sabinacosmeticapplication.ui.components.common
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
@@ -20,7 +21,7 @@ fun SummaryValueRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = label,
