@@ -1,131 +1,102 @@
 # Sabina Cosmetic Application
 
-A modern Android cosmetic shopping application built with **Kotlin** and **Jetpack Compose**, designed with a clean and scalable architecture.  
-This project focuses on delivering a polished shopping experience for beauty products, including product browsing, category discovery, search, product detail, and cart management.
+A modern Android cosmetic shopping application built with **Kotlin** and **Jetpack Compose**, designed with a clean architecture approach and focused on a smooth mobile shopping experience.
 
 ## Overview
 
-Sabina Cosmetic Application is a mobile e-commerce app concept for a Korean beauty marketplace.  
-The project is being developed with a strong focus on:
+Sabina Cosmetic Application is a beauty shopping app prototype that allows users to browse cosmetic products, view product details, search products, explore categories, and manage a shopping cart.
 
-- modern Android development
-- clean architecture
-- scalable code structure
+The project has been developed with a strong focus on:
+
+- modern Android development practices
+- clean and scalable architecture
 - reusable UI components
+- API integration
 - local cart persistence
-- production-ready project organization
-
-The app currently includes the core shopping flow from home screen to cart interaction.
-
----
+- professional project structure for future expansion
 
 ## Features Implemented
 
-### Home Screen
-- clean modern landing screen
-- promotional banner section
-- category preview section
-- flash sale / featured product section
-- product navigation support
-- search entry point
+### Product Browsing
+- Home screen with promotional banners
+- Recommended product section
+- Product category display
+- Product cards with brand, title, category, price, and product image
 
-### Categories Screen
-- category-based product browsing
-- clean card-based category UI
-- navigation to category product list
+### Product Detail
+- Dedicated product detail screen
+- Product image rendering
+- Category badge and product status display
+- Price section
+- Product description and product information section
+- Add to Cart action
 
-### Search Screen
-- product search input
-- recent search history support
-- popular keyword section
-- filtered product result list
-- navigation to product detail
+### Search
+- Search screen with query handling
+- Product filtering based on keyword
+- Search result display
 
-### Product Detail Screen
-- product image
-- brand, title, category, and pricing
-- discount / label support
-- product description
-- add-to-cart action
-- navigation back support
+### Categories
+- Category browsing screen
+- Category-based product filtering
+- Category navigation flow
 
-### Cart System
-- add products to cart
-- increase / decrease quantity
-- remove item from cart
-- restore removed item
-- clear cart
-- total item count
-- total price calculation
-- empty cart state
-- cart badge in bottom navigation
-- cart data stored locally using Room database
+### Cart
+- Add products to cart
+- Increase and decrease item quantity
+- Remove item from cart
+- Undo removed item
+- Cart subtotal and total price display
+- Empty cart state
+- Local cart persistence using Room database
 
-### My Page
-- account-style profile screen
-- quick actions layout
-- settings/help style sections
+## Architecture
 
----
+This project follows a layered and scalable architecture:
 
-## Tech Stack
+- **feature** layer for presentation/UI
+- **domain** layer for repository contracts and use cases
+- **data** layer for remote, local, mapper, and repository implementations
+- **di** layer for dependency injection modules
+- **core/ui** shared reusable components and design system
 
-### Language
+### Main Technologies
 - **Kotlin**
-
-### UI
 - **Jetpack Compose**
-- Material 3
-- Compose Navigation
-
-### Architecture
-- **Clean Architecture**
-- **MVVM**
-- feature-based package structure
-
-### Dependency Injection
 - **Hilt**
-
-### Local Storage
-- **Room Database**
-
-### Async / Reactive
-- Kotlin Coroutines
-- StateFlow
-- Flow
-
-### Image Loading
+- **Retrofit**
+- **Room**
 - **Coil**
+- **Coroutines**
+- **StateFlow**
+- **Navigation Compose**
 
----
-
-## Project Architecture
-
-This project is organized using a scalable layered architecture:
+## Project Structure
 
 ```text
-com.example.sabinacosmeticapplication
-├── core
-├── data
-│   ├── local
-│   ├── mapper
-│   ├── model
-│   ├── remote
-│   └── repository
-├── di
-├── domain
-│   ├── model
-│   ├── repository
-│   └── usecase
-├── feature
-│   ├── home
-│   ├── categories
-│   ├── categoryproducts
-│   ├── search
-│   ├── productdetail
-│   ├── cart
-│   └── my
-└── navigation
+app/
+ ┣ data/
+ ┃ ┣ local/
+ ┃ ┣ remote/
+ ┃ ┣ mapper/
+ ┃ ┣ model/
+ ┃ ┗ repository/
+ ┣ domain/
+ ┃ ┣ repository/
+ ┃ ┗ usecase/
+ ┣ feature/
+ ┃ ┣ home/
+ ┃ ┣ categories/
+ ┃ ┣ categoryproducts/
+ ┃ ┣ productdetail/
+ ┃ ┣ search/
+ ┃ ┣ cart/
+ ┃ ┗ my/
+ ┣ di/
+ ┣ navigation/
+ ┣ ui/
+ ┃ ┗ components/
+ ┗ core/
 
 **Asadbek Matyaqubov**
 

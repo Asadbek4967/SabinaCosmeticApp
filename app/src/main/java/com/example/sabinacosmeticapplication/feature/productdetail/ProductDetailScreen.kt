@@ -191,8 +191,12 @@ private fun ProductDetailContent(
     ) {
         Card(
             shape = AppShapes.ExtraLarge,
-            colors = CardDefaults.cardColors(containerColor = AppColors.Surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.CardElevation)
+            colors = CardDefaults.cardColors(
+                containerColor = AppColors.Surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = AppDimens.CardElevation
+            )
         ) {
             Box(
                 modifier = Modifier
@@ -202,6 +206,7 @@ private fun ProductDetailContent(
             ) {
                 ProductImage(
                     imageUrl = product.imageUrl,
+                    imageRes = product.imageRes,
                     contentDescription = product.title,
                     size = AppDimens.ProductImageXL,
                     badgeText = product.category
@@ -257,10 +262,12 @@ private fun ProductDetailContent(
 
         Card(
             shape = AppShapes.Large,
-            colors = CardDefaults.cardColors(containerColor = AppColors.Surface)
+            colors = CardDefaults.cardColors(
+                containerColor = AppColors.Surface
+            )
         ) {
             Text(
-                text = product.description,
+                text = product.description.ifBlank { "No description available." },
                 modifier = Modifier.padding(AppDimens.Space16),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = AppColors.SecondaryText
@@ -277,15 +284,29 @@ private fun ProductDetailContent(
 
         Card(
             shape = AppShapes.Large,
-            colors = CardDefaults.cardColors(containerColor = AppColors.Surface)
+            colors = CardDefaults.cardColors(
+                containerColor = AppColors.Surface
+            )
         ) {
             Column(
                 modifier = Modifier.padding(AppDimens.Space16),
                 verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
             ) {
-                ProductInfoRow(label = "Brand", value = product.brand.ifBlank { "-" })
-                ProductInfoRow(label = "Category", value = product.category.ifBlank { "-" })
-                ProductInfoRow(label = "Product ID", value = product.id)
+                ProductInfoRow(
+                    label = "Brand",
+                    value = product.brand.ifBlank { "-" },
+                    showDivider = true
+                )
+                ProductInfoRow(
+                    label = "Category",
+                    value = product.category.ifBlank { "-" },
+                    showDivider = true
+                )
+                ProductInfoRow(
+                    label = "Product ID",
+                    value = product.id,
+                    showDivider = false
+                )
             }
         }
 
@@ -318,7 +339,8 @@ private fun ProductBadgeRow(
 @Composable
 private fun ProductInfoRow(
     label: String,
-    value: String
+    value: String,
+    showDivider: Boolean
 ) {
     Column {
         Row(
@@ -343,8 +365,10 @@ private fun ProductInfoRow(
             )
         }
 
-        Spacer(modifier = Modifier.height(AppDimens.Space12))
-        HorizontalDivider(color = AppColors.Divider)
+        if (showDivider) {
+            Spacer(modifier = Modifier.height(AppDimens.Space12))
+            HorizontalDivider(color = AppColors.Divider)
+        }
     }
 }
 

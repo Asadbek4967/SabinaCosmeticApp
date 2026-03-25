@@ -10,7 +10,10 @@ class ProductRemoteDataSource @Inject constructor(
 ) {
 
     suspend fun getAllProducts(): List<Product> {
-        return apiService.getAllProducts().map { it.toProduct() }
+        val response = apiService.getAllProducts()
+        return response
+            .map { dto -> dto.toProduct() }
+            .filter { product -> product.id.isNotBlank() }
     }
 
     suspend fun getProductById(id: String): Product {
@@ -18,6 +21,19 @@ class ProductRemoteDataSource @Inject constructor(
     }
 
     suspend fun getProductsByCategory(category: String): List<Product> {
-        return apiService.getProductsByCategory(category).map { it.toProduct() }
+        val normalizedSelectedCategory = category.normalizeCategory()
+
+        return getAllProducts().filter { product ->
+            product.category.normalizeCategory() == normalizedSelectedCategory
+        }
     }
+}
+
+private fun String.normalizeCategory(): String {
+    return trim()
+        .lowercase()
+        .replace("&", "and")
+        .replace("-", " ")
+        .replace("_", " ")
+        .replace("\\s+".toRegex(), "")
 }

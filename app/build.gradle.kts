@@ -50,7 +50,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://69c19bcd085e1a9fae417833.mockapi.io/api/v1/\""
+                "\"http://10.0.2.2:3000/api/\""
             )
         }
     }

@@ -39,7 +39,7 @@ private val CategoryIconBackground = Color(0xFFEFF3FF)
 private val CategoriesBackground = Color(0xFFF6F7FB)
 
 val appCategories = listOf(
-    CategoryCardUi("Skincare", "Daily care essentials", "🧴"),
+    CategoryCardUi("Skin Care", "Daily care essentials", "🧴"),
     CategoryCardUi("Serum", "Brightening & hydration", "💧"),
     CategoryCardUi("Sun Care", "SPF protection", "☀️"),
     CategoryCardUi("Cream", "Barrier & moisture", "🫙"),
@@ -68,7 +68,10 @@ fun CategoriesScreen(
             CategoriesHeader()
         }
 
-        items(appCategories) { item ->
+        items(
+            items = appCategories,
+            key = { it.title }
+        ) { item ->
             CategoryCard(
                 item = item,
                 onClick = { onCategoryClick(item.title) }
