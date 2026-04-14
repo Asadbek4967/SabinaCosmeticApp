@@ -2,22 +2,18 @@ package com.example.sabinacosmeticapplication.ui.components.product
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import com.example.sabinacosmeticapplication.data.mapper.CategoryMapper
 import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
@@ -29,6 +25,36 @@ fun HorizontalProductCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val displayImageUrl = remember(product.resolvedImageUrl) {
+        product.resolvedImageUrl.orEmpty()
+    }
+
+    val displayCategory = remember(product.safeCategory) {
+        CategoryMapper.toDisplayName(product.safeCategory)
+    }
+
+    val displayDescription = remember(product.safeDescription) {
+        product.safeDescription
+            .takeIf { it.isNotBlank() && it != "No description available." }
+    }
+
+    val primaryBadge = remember(
+        product.primaryBadge,
+        product.isFlashSale,
+        product.isBestSeller,
+        product.discountLabel
+    ) {
+        product.primaryBadge
+    }
+
+    val secondaryBadge = remember(
+        product.secondaryBadge,
+        product.isFlashSale,
+        product.discountLabel
+    ) {
+        product.secondaryBadge
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -45,21 +71,16 @@ fun HorizontalProductCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(AppDimens.ProductCardOuterPadding),
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.ProductCardImageSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                ProductImage(
-                    imageUrl = product.imageUrl,
-                    imageRes = product.imageRes,
-                    contentDescription = product.title,
-                    size = AppDimens.ProductImageMedium,
-                    badgeText = product.category
-                )
-            }
-
-            Box(modifier = Modifier.width(AppDimens.ProductCardImageSpacing))
+            ProductImage(
+                imageUrl = displayImageUrl,
+                imageRes = product.imageRes,
+                contentDescription = product.safeTitle,
+                size = AppDimens.ProductImageMedium,
+                badgeText = primaryBadge
+            )
 
             Column(
                 modifier = Modifier
@@ -68,30 +89,34 @@ fun HorizontalProductCard(
                 verticalArrangement = Arrangement.spacedBy(AppDimens.ProductCardContentSpacing)
             ) {
                 ProductBrandText(
-                    brand = product.brand
+                    brand = product.safeBrand
                 )
 
-                Text(
-                    text = product.title,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        color = AppColors.Primary,
-                        fontWeight = FontWeight.SemiBold
-                    ),
+                ProductTitleText(
+                    title = product.safeTitle,
                     maxLines = 2,
-                    minLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    minLines = 2
                 )
 
-                if (product.category.isNotBlank()) {
+                if (displayCategory.isNotBlank()) {
                     ProductBadge(
-                        text = product.category
+                        text = displayCategory,
+                        backgroundColor = AppColors.InfoBackground,
+                        contentColor = AppColors.Primary
+                    )
+                }
+
+                if (displayDescription != null) {
+                    ProductDescriptionText(
+                        description = displayDescription,
+                        maxLines = 2
                     )
                 }
 
                 ProductPriceBlock(
-                    price = product.price,
-                    oldPrice = product.oldPrice,
-                    discountLabel = product.discountLabel
+                    price = product.formattedPrice,
+                    oldPrice = product.formattedOldPrice,
+                    discountLabel = secondaryBadge ?: product.discountLabel
                 )
 
                 ProductStatusBadge(

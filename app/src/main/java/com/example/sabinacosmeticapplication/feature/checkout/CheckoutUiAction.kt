@@ -1,4 +1,7 @@
 package com.example.sabinacosmeticapplication.feature.checkout
 
-class CheckoutUiAction {
+sealed interface CheckoutUiAction {
+    data object PlaceOrderClick : CheckoutUiAction
+    data object ContinueShoppingClick : CheckoutUiAction
+    data object ViewOrdersClick : CheckoutUiAction
 }

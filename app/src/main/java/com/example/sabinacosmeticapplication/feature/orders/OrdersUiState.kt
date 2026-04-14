@@ -1,4 +1,8 @@
 package com.example.sabinacosmeticapplication.feature.orders
 
-class OrdersUiState {
-}
+import com.example.sabinacosmeticapplication.data.local.relation.OrderWithItems
+
+data class OrdersUiState(
+    val isLoading: Boolean = true,
+    val orders: List<OrderWithItems> = emptyList()
+)

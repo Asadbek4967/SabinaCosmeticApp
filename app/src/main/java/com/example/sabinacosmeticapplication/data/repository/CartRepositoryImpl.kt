@@ -5,51 +5,62 @@ import com.example.sabinacosmeticapplication.data.mapper.toCartEntity
 import com.example.sabinacosmeticapplication.data.mapper.toCartItem
 import com.example.sabinacosmeticapplication.domain.model.CartItem
 import com.example.sabinacosmeticapplication.domain.repository.CartRepository
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 class CartRepositoryImpl @Inject constructor(
     private val cartDao: CartDao
 ) : CartRepository {
 
-    override val cartItems: Flow<List<CartItem>> =
-        cartDao.observeCartItems().map { entities ->
-            entities.map { it.toCartItem() }
+    override fun observeCartItems(): Flow<List<CartItem>> {
+        return cartDao.observeCartItems().map { entities ->
+            entities.map { entity -> entity.toCartItem() }
         }
+    }
+
+    override suspend fun getCartItemsOnce(): List<CartItem> {
+        return cartDao.getCartItemsOnce().map { entity ->
+            entity.toCartItem()
+        }
+    }
 
     override suspend fun addToCart(item: CartItem) {
-        val existingItem = cartDao.getCartItemById(item.productId)
+        val existingItem = cartDao.getCartItemByProductId(item.productId)
 
         if (existingItem == null) {
-            cartDao.upsertCartItem(item.toCartEntity())
+            cartDao.insert(item.toCartEntity())
         } else {
-            cartDao.upsertCartItem(
-                existingItem.copy(quantity = existingItem.quantity + item.quantity)
+            cartDao.insert(
+                existingItem.copy(
+                    title = item.title,
+                    brand = item.brand,
+                    category = item.category,
+                    imageUrl = item.imageUrl,
+                    price = item.price,
+                    quantity = existingItem.quantity + item.quantity
+                )
             )
         }
     }
 
-    override suspend fun removeFromCart(productId: String) {
-        cartDao.deleteCartItemById(productId)
-    }
-
-    override suspend fun increaseQuantity(productId: String) {
-        val item = cartDao.getCartItemById(productId) ?: return
-        cartDao.upsertCartItem(item.copy(quantity = item.quantity + 1))
-    }
-
-    override suspend fun decreaseQuantity(productId: String) {
-        val item = cartDao.getCartItemById(productId) ?: return
-
-        if (item.quantity > 1) {
-            cartDao.upsertCartItem(item.copy(quantity = item.quantity - 1))
+    override suspend fun updateQuantity(productId: String, quantity: Int) {
+        if (quantity <= 0) {
+            cartDao.deleteByProductId(productId)
         } else {
-            cartDao.deleteCartItemById(productId)
+            cartDao.updateQuantity(productId, quantity)
         }
+    }
+
+    override suspend fun removeFromCart(productId: String) {
+        cartDao.deleteByProductId(productId)
     }
 
     override suspend fun clearCart() {
         cartDao.clearCart()
+    }
+
+    override fun observeCartBadgeCount(): Flow<Int> {
+        return cartDao.observeCartBadgeCount()
     }
 }

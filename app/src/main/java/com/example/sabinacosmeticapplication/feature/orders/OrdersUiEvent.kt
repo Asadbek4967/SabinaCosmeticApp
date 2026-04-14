@@ -1,4 +1,5 @@
 package com.example.sabinacosmeticapplication.feature.orders
 
-class OrdersUiEvent {
+sealed interface OrdersUiEvent {
+    data class NavigateToOrderDetail(val orderId: String) : OrdersUiEvent
 }

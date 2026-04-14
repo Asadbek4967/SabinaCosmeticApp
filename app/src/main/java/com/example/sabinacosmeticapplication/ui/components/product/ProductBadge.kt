@@ -8,26 +8,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
-import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.AppShapes
+
+private val ProductBadgeMinHeight = 28.dp
+private val ProductBadgeMinWidth = 44.dp
+private val DefaultProductBadgePadding = PaddingValues(
+    horizontal = 10.dp,
+    vertical = 6.dp
+)
 
 @Composable
 fun ProductBadge(
     text: String,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = AppColors.DiscountBadgeBg,
+    backgroundColor: Color = AppColors.DiscountBadgeBackground,
     contentColor: Color = AppColors.DiscountBadgeText,
-    paddingValues: PaddingValues = PaddingValues(
-        horizontal = AppDimens.BadgeHorizontalPadding,
-        vertical = AppDimens.BadgeVerticalPadding
-    )
+    paddingValues: PaddingValues = DefaultProductBadgePadding
 ) {
-    if (text.isBlank()) return
+    val displayText = remember(text) {
+        text.trim()
+    }
+
+    if (displayText.isBlank()) return
 
     Row(
         modifier = modifier
@@ -35,11 +44,14 @@ fun ProductBadge(
                 color = backgroundColor,
                 shape = AppShapes.Pill
             )
-            .defaultMinSize(minHeight = AppDimens.BadgeMinHeight)
+            .defaultMinSize(
+                minWidth = ProductBadgeMinWidth,
+                minHeight = ProductBadgeMinHeight
+            )
             .padding(paddingValues)
     ) {
         Text(
-            text = text,
+            text = displayText,
             style = MaterialTheme.typography.labelMedium.copy(
                 color = contentColor,
                 fontWeight = FontWeight.SemiBold

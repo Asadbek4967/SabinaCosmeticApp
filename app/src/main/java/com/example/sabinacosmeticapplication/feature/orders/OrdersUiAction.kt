@@ -1,4 +1,5 @@
 package com.example.sabinacosmeticapplication.feature.orders
 
-class OrdersUiAction {
+sealed interface OrdersUiAction {
+    data class OpenOrderDetail(val orderId: String) : OrdersUiAction
 }

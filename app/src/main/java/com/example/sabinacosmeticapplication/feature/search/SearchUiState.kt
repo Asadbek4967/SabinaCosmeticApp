@@ -14,18 +14,30 @@ data class SearchUiState(
         "Lip Care",
         "Sun Care"
     ),
-    val selectedCategory: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val validationMessage: String? = null
 ) {
-    val isQueryEmpty: Boolean
-        get() = query.isBlank()
+    companion object {
+        const val MIN_QUERY_LENGTH = 2
+        const val MAX_RECENT_SEARCHES = 8
+    }
 
-    val showEmptyQueryState: Boolean
-        get() = query.isBlank() && recentSearches.isNotEmpty()
+    val normalizedQuery: String
+        get() = query.trim()
 
-    val showNoResultsState: Boolean
-        get() = query.isNotBlank() && results.isEmpty() && !isLoading
+    val showValidationState: Boolean
+        get() = validationMessage != null && !isLoading
+
+    val showErrorState: Boolean
+        get() = errorMessage != null && !isLoading && results.isEmpty()
 
     val showResults: Boolean
         get() = results.isNotEmpty()
+
+    val showNoResultsState: Boolean
+        get() = normalizedQuery.length >= MIN_QUERY_LENGTH &&
+                results.isEmpty() &&
+                !isLoading &&
+                errorMessage == null &&
+                validationMessage == null
 }

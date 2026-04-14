@@ -1,4 +1,7 @@
 package com.example.sabinacosmeticapplication.feature.checkout
 
-class CheckoutUiEvent {
+sealed interface CheckoutUiEvent {
+    data class ShowMessage(val message: String) : CheckoutUiEvent
+    data object NavigateToHome : CheckoutUiEvent
+    data object NavigateToOrders : CheckoutUiEvent
 }

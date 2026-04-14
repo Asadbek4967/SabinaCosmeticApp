@@ -1,4 +1,7 @@
 package com.example.sabinacosmeticapplication.data.model
 
-class Category {
-}
+data class Category(
+    val key: String,
+    val displayName: String,
+    val iconEmoji: String
+)

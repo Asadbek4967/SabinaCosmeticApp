@@ -3,17 +3,19 @@ package com.example.sabinacosmeticapplication.ui.components.product
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
-import com.example.sabinacosmeticapplication.ui.theme.AppDimens
+
+private val ProductPriceRowSpacing = 8.dp
+private val ProductPriceColumnSpacing = 6.dp
 
 @Composable
 fun ProductPriceBlock(
@@ -22,13 +24,29 @@ fun ProductPriceBlock(
     oldPrice: String? = null,
     discountLabel: String? = null
 ) {
+    val displayPrice = remember(price) {
+        price.trim()
+    }
+
+    val displayOldPrice = remember(oldPrice) {
+        oldPrice?.trim()?.takeIf { it.isNotBlank() && it != displayPrice }
+    }
+
+    val displayDiscountLabel = remember(discountLabel) {
+        discountLabel?.trim()?.takeIf { it.isNotBlank() }
+    }
+
+    if (displayPrice.isBlank()) return
+
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(AppDimens.PriceBlockVerticalSpacing)
+        verticalArrangement = Arrangement.spacedBy(ProductPriceColumnSpacing)
     ) {
-        Row {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(ProductPriceRowSpacing)
+        ) {
             Text(
-                text = price,
+                text = displayPrice,
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = AppColors.Price,
                     fontWeight = FontWeight.Bold
@@ -37,11 +55,9 @@ fun ProductPriceBlock(
                 overflow = TextOverflow.Ellipsis
             )
 
-            if (!oldPrice.isNullOrBlank()) {
-                Spacer(modifier = Modifier.width(AppDimens.PriceBlockPriceSpacing))
-
+            if (displayOldPrice != null) {
                 Text(
-                    text = oldPrice,
+                    text = displayOldPrice,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = AppColors.OldPrice,
                         textDecoration = TextDecoration.LineThrough
@@ -52,10 +68,10 @@ fun ProductPriceBlock(
             }
         }
 
-        if (!discountLabel.isNullOrBlank()) {
+        if (displayDiscountLabel != null) {
             ProductBadge(
-                text = discountLabel,
-                backgroundColor = AppColors.DiscountBadgeBg,
+                text = displayDiscountLabel,
+                backgroundColor = AppColors.DiscountBadgeBackground,
                 contentColor = AppColors.DiscountBadgeText
             )
         }

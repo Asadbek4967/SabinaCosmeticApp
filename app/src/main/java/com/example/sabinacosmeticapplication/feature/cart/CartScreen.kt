@@ -1,258 +1,148 @@
 package com.example.sabinacosmeticapplication.feature.cart
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.ShoppingBag
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import com.example.sabinacosmeticapplication.feature.cart.components.CartBottomBar
+import com.example.sabinacosmeticapplication.feature.cart.components.CartItemCard
+import com.example.sabinacosmeticapplication.feature.cart.components.CartSummarySection
+import com.example.sabinacosmeticapplication.feature.cart.components.EmptyCartContent
+import com.example.sabinacosmeticapplication.ui.components.common.AppTopBar
+import com.example.sabinacosmeticapplication.ui.theme.AppColors
+import com.example.sabinacosmeticapplication.ui.theme.AppDimens
+import com.example.sabinacosmeticapplication.ui.theme.AppShapes
+
+private val CartBottomSpacing = 220.dp
 
 @Composable
 fun CartScreen(
-    padding: PaddingValues,
     uiState: CartUiState,
-    onIncreaseQuantity: (String) -> Unit,
-    onDecreaseQuantity: (String) -> Unit,
-    onRemoveItem: (CartItemUi) -> Unit,
-    onRestoreLastRemovedItem: () -> Unit,
-    onClearLastRemovedItem: () -> Unit,
-    onClearCart: () -> Unit,
-    onCheckoutClick: () -> Unit
+    snackbarHostState: SnackbarHostState,
+    onAction: (CartUiAction) -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(uiState.lastRemovedItem) {
-        val removedItem = uiState.lastRemovedItem ?: return@LaunchedEffect
-
-        val result = snackbarHostState.showSnackbar(
-            message = "${removedItem.title} removed from cart",
-            actionLabel = "Undo"
+    if (uiState.isClearCartDialogVisible) {
+        ClearCartConfirmationDialog(
+            onDismiss = { onAction(CartUiAction.ClearCartDismissed) },
+            onConfirm = { onAction(CartUiAction.ClearCartConfirmed) }
         )
-
-        when (result) {
-            SnackbarResult.ActionPerformed -> onRestoreLastRemovedItem()
-            SnackbarResult.Dismissed -> onClearLastRemovedItem()
-        }
     }
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
+        modifier = modifier.fillMaxSize(),
+        containerColor = AppColors.Background,
         snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
+            Box(
+                modifier = Modifier.navigationBarsPadding()
+            ) {
+                SnackbarHost(hostState = snackbarHostState)
+            }
+        },
+        topBar = {
+            AppTopBar(
+                modifier = Modifier.statusBarsPadding(),
+                title = "Cart",
+                subtitle = buildCartSubtitle(uiState = uiState)
+            )
         },
         bottomBar = {
-            if (uiState.items.isNotEmpty()) {
+            if (uiState.hasItems && !uiState.isLoading) {
                 CartBottomBar(
-                    totalItems = uiState.totalItemCount,
+                    totalItems = uiState.totalItems,
+                    subtotalPrice = uiState.subtotalPrice,
+                    shippingPrice = uiState.shippingPrice,
                     totalPrice = uiState.totalPrice,
-                    onCheckoutClick = onCheckoutClick
+                    onCheckoutClick = {
+                        onAction(CartUiAction.CheckoutClicked)
+                    },
+                    onClearAll = {
+                        onAction(CartUiAction.ClearCartClicked)
+                    }
                 )
             }
         }
     ) { innerPadding ->
-        if (uiState.isEmpty) {
-            EmptyCartContent(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 24.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    CartSummaryHeader(
-                        totalItems = uiState.totalItemCount,
-                        onClearCart = onClearCart
-                    )
-                }
-
-                items(
-                    items = uiState.items,
-                    key = { it.productId }
-                ) { item ->
-                    CartItemCard(
-                        item = item,
-                        onIncrease = { onIncreaseQuantity(item.productId) },
-                        onDecrease = { onDecreaseQuantity(item.productId) },
-                        onRemove = { onRemoveItem(item) }
-                    )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CartSummaryHeader(
-    totalItems: Int,
-    onClearCart: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Your Cart ($totalItems)",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "Clear all",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clip(RoundedCornerShape(10.dp))
-                .clickable(onClick = onClearCart)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        )
-    }
-}
-
-@Composable
-private fun CartItemCard(
-    item: CartItemUi,
-    onIncrease: () -> Unit,
-    onDecrease: () -> Unit,
-    onRemove: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AsyncImage(
-                    model = item.imageUrl,
-                    contentDescription = item.title,
+        when {
+            uiState.isLoading -> {
+                CartLoading(
                     modifier = Modifier
-                        .size(84.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Crop
+                        .fillMaxSize()
+                        .background(AppColors.Background)
+                        .padding(innerPadding)
                 )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = item.brand,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2
-                    )
-
-                    Text(
-                        text = item.price,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                IconButton(onClick = onRemove) {
-                    Icon(
-                        imageVector = Icons.Outlined.DeleteOutline,
-                        contentDescription = "Remove item"
-                    )
-                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                QuantityStepper(
-                    quantity = item.quantity,
-                    onIncrease = onIncrease,
-                    onDecrease = onDecrease
+            uiState.showErrorState -> {
+                CartErrorContent(
+                    message = uiState.errorMessage ?: "Something went wrong",
+                    onRetry = onRetry,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.Background)
+                        .padding(innerPadding)
                 )
+            }
 
-                Text(
-                    text = "Subtotal: $${item.totalItemPrice}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold
+            uiState.showEmptyState -> {
+                EmptyCartContent(
+                    state = uiState.emptyState,
+                    onStartShoppingClick = {
+                        onAction(CartUiAction.StartShoppingClicked)
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.Background)
+                        .padding(innerPadding)
+                )
+            }
+
+            uiState.showContent -> {
+                CartContent(
+                    items = uiState.items,
+                    totalItems = uiState.totalItems,
+                    subtotalPrice = uiState.subtotalPrice,
+                    shippingPrice = uiState.shippingPrice,
+                    onAction = onAction,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.Background)
+                        .padding(innerPadding)
                 )
             }
         }
@@ -260,172 +150,249 @@ private fun CartItemCard(
 }
 
 @Composable
-private fun QuantityStepper(
-    quantity: Int,
-    onIncrease: () -> Unit,
-    onDecrease: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            onClick = onDecrease,
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceVariant
-        ) {
-            Box(
-                modifier = Modifier.size(36.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Remove,
-                    contentDescription = "Decrease quantity"
-                )
-            }
-        }
-
-        Text(
-            text = quantity.toString(),
-            modifier = Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        Surface(
-            onClick = onIncrease,
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        ) {
-            Box(
-                modifier = Modifier.size(36.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = "Increase quantity",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CartBottomBar(
-    totalItems: Int,
-    totalPrice: Int,
-    onCheckoutClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Total items",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = totalItems.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = "Total price",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "$$totalPrice",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Button(
-                onClick = onCheckoutClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors()
-            ) {
-                Text(
-                    text = "Proceed to Checkout",
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyCartContent(
+private fun CartLoading(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+        Card(
+            shape = AppShapes.ExtraLarge,
+            colors = CardDefaults.cardColors(
+                containerColor = AppColors.Surface
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = AppDimens.CardElevation
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(
+                    horizontal = AppDimens.Space24,
+                    vertical = AppDimens.Space24
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    color = AppColors.Primary
+                )
+
+                Text(
+                    text = "Loading cart...",
+                    modifier = Modifier.padding(top = AppDimens.Space12),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppColors.SecondaryText
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartContent(
+    items: List<CartItemUi>,
+    totalItems: Int,
+    subtotalPrice: Int,
+    shippingPrice: Int,
+    onAction: (CartUiAction) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(
+            start = AppDimens.ScreenHorizontal,
+            end = AppDimens.ScreenHorizontal,
+            top = AppDimens.Space16,
+            bottom = CartBottomSpacing
+        ),
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space14)
+    ) {
+        item {
+            CartInfoBanner(
+                totalItems = totalItems,
+                shippingPrice = shippingPrice
+            )
+        }
+
+        item {
+            CartSummarySection(
+                subtotalPrice = subtotalPrice,
+                shippingPrice = shippingPrice
+            )
+        }
+
+        items(
+            items = items,
+            key = { item -> item.productId }
+        ) { item ->
+            CartItemCard(
+                item = item,
+                onIncrease = {
+                    onAction(CartUiAction.IncreaseQuantity(item.productId))
+                },
+                onDecrease = {
+                    onAction(CartUiAction.DecreaseQuantity(item.productId))
+                },
+                onRemove = {
+                    onAction(CartUiAction.RemoveItem(item))
+                }
+            )
+        }
+
+        item {
+            Spacer(
+                modifier = Modifier.windowInsetsBottomHeight(
+                    WindowInsets.safeDrawing
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun CartInfoBanner(
+    totalItems: Int,
+    shippingPrice: Int
+) {
+    Card(
+        shape = AppShapes.ExtraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = AppColors.Surface
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = AppDimens.Space16,
+                    vertical = AppDimens.Space14
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12)
         ) {
             Box(
                 modifier = Modifier
-                    .size(96.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+                    .background(
+                        AppColors.Primary.copy(alpha = 0.10f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.ShoppingBag,
                     contentDescription = null,
-                    modifier = Modifier.size(42.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = AppColors.Primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = "Ready for checkout",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = AppColors.Primary
+                )
 
-            Text(
-                text = "Your cart is empty",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Add your favorite beauty products and they will appear here.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = buildCartBannerDescription(
+                        totalItems = totalItems,
+                        shippingPrice = shippingPrice
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.SecondaryText
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun CartErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    EmptyCartContent(
+        state = CartEmptyState(
+            title = "Unable to load cart",
+            description = message,
+            actionLabel = "Try again"
+        ),
+        onStartShoppingClick = onRetry,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ClearCartConfirmationDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Clear cart?",
+                style = MaterialTheme.typography.titleLarge,
+                color = AppColors.Primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "This will remove all items from your cart.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.SecondaryText
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm
+            ) {
+                Text(
+                    text = "Clear",
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text(
+                    text = "Cancel",
+                    color = AppColors.Primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    )
+}
+
+private fun buildCartSubtitle(uiState: CartUiState): String {
+    return if (uiState.hasItems) {
+        "${uiState.totalItems} item${if (uiState.totalItems > 1) "s" else ""}"
+    } else {
+        "Your selected beauty picks"
+    }
+}
+
+private fun buildCartBannerDescription(
+    totalItems: Int,
+    shippingPrice: Int
+): String {
+    val itemText = "$totalItems item${if (totalItems > 1) "s" else ""} selected"
+
+    return if (shippingPrice == 0) {
+        "$itemText • Free shipping applied"
+    } else {
+        "$itemText • Shipping will be added at checkout"
     }
 }

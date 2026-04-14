@@ -1,84 +1,150 @@
 package com.example.sabinacosmeticapplication.ui.components.product
 
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
+import com.example.sabinacosmeticapplication.ui.theme.AppShapes
 
 @Composable
 fun ProductImage(
     imageUrl: String,
-    @DrawableRes imageRes: Int?,
+    imageRes: Int?,
     contentDescription: String,
-    modifier: Modifier = Modifier,
-    size: Dp = AppDimens.ProductImageLarge,
-    badgeText: String? = null
+    size: Dp,
+    badgeText: String? = null,
+    modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val displayImageUrl = remember(imageUrl) {
+        imageUrl.trim()
+    }
+
+    val displayBadgeText = remember(badgeText) {
+        badgeText?.trim().orEmpty()
+    }
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(size)
-            .clip(shape)
-            .background(AppColors.SurfaceVariant)
+        modifier = modifier.size(size)
     ) {
-        when {
-            imageUrl.isNotBlank() -> {
-                RemoteProductImage(
-                    imageUrl = imageUrl,
-                    contentDescription = contentDescription,
-                    size = size
-                )
-            }
+        ProductImageSurface(
+            imageUrl = displayImageUrl,
+            imageRes = imageRes,
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(AppShapes.Large)
+                .background(AppColors.SurfaceVariant)
+        )
 
-            imageRes != null -> {
-                LocalProductImage(
-                    imageRes = imageRes,
-                    contentDescription = contentDescription
-                )
-            }
-
-            else -> {
-                ProductImagePlaceholder(
-                    title = contentDescription,
-                    size = size
-                )
-            }
-        }
-
-        if (!badgeText.isNullOrBlank()) {
-            ProductImageBadge(
-                text = badgeText,
+        if (displayBadgeText.isNotBlank()) {
+            ProductBadge(
+                text = displayBadgeText,
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(10.dp)
+                    .padding(AppDimens.Space10)
+                    .wrapContentSize(),
+                backgroundColor = AppColors.InfoBackground,
+                contentColor = AppColors.Primary
+            )
+        }
+    }
+}
+
+@Composable
+fun ProductCardImage(
+    imageUrl: String,
+    imageRes: Int? = null,
+    contentDescription: String = "Product image",
+    badgeText: String? = null,
+    modifier: Modifier = Modifier
+) {
+    val displayImageUrl = remember(imageUrl) {
+        imageUrl.trim()
+    }
+
+    val displayBadgeText = remember(badgeText) {
+        badgeText?.trim().orEmpty()
+    }
+
+    Box(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        ProductImageSurface(
+            imageUrl = displayImageUrl,
+            imageRes = imageRes,
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(AppDimens.ProductImageLarge)
+                .clip(AppShapes.Large)
+                .background(AppColors.SurfaceVariant)
+        )
+
+        if (displayBadgeText.isNotBlank()) {
+            ProductBadge(
+                text = displayBadgeText,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(AppDimens.Space10),
+                backgroundColor = AppColors.InfoBackground,
+                contentColor = AppColors.Primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductImageSurface(
+    imageUrl: String,
+    imageRes: Int?,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    when {
+        imageRes != null -> {
+            AsyncImage(
+                model = imageRes,
+                contentDescription = contentDescription,
+                modifier = modifier,
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        imageUrl.isNotBlank() && isLikelyImageUrl(imageUrl) -> {
+            RemoteProductImage(
+                imageUrl = imageUrl,
+                contentDescription = contentDescription,
+                modifier = modifier
+            )
+        }
+
+        else -> {
+            ProductImagePlaceholder(
+                modifier = modifier
             )
         }
     }
@@ -88,39 +154,33 @@ fun ProductImage(
 private fun RemoteProductImage(
     imageUrl: String,
     contentDescription: String,
-    size: Dp
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val request = remember(imageUrl) {
+
+    val imageRequest = remember(imageUrl, context) {
         ImageRequest.Builder(context)
             .data(imageUrl)
             .crossfade(true)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .networkCachePolicy(CachePolicy.ENABLED)
             .build()
     }
 
     SubcomposeAsyncImage(
-        model = request,
+        model = imageRequest,
         contentDescription = contentDescription,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(size),
+        modifier = modifier,
         contentScale = ContentScale.Crop,
         loading = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(size),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = AppColors.Primary
-                )
-            }
+            ProductImageLoadingPlaceholder(
+                modifier = Modifier.fillMaxSize()
+            )
         },
         error = {
             ProductImagePlaceholder(
-                title = contentDescription,
-                size = size
+                modifier = Modifier.fillMaxSize()
             )
         },
         success = {
@@ -130,84 +190,58 @@ private fun RemoteProductImage(
 }
 
 @Composable
-private fun LocalProductImage(
-    @DrawableRes imageRes: Int,
-    contentDescription: String
-) {
-    Image(
-        painter = painterResource(id = imageRes),
-        contentDescription = contentDescription,
-        modifier = Modifier.fillMaxWidth(),
-        contentScale = ContentScale.Crop
-    )
-}
-
-@Composable
-private fun ProductImagePlaceholder(
-    title: String,
-    size: Dp
-) {
-    val firstLetter = title
-        .trim()
-        .firstOrNull()
-        ?.uppercase()
-        ?: "?"
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(size)
-            .background(AppColors.SurfaceVariant),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(AppColors.Surface),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = firstLetter,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.Primary
-                )
-            }
-
-            Text(
-                text = "No image",
-                style = MaterialTheme.typography.bodySmall,
-                color = AppColors.SecondaryText,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProductImageBadge(
-    text: String,
+private fun ProductImageLoadingPlaceholder(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(AppColors.Surface.copy(alpha = 0.95f))
-            .padding(
-                horizontal = 10.dp,
-                vertical = 6.dp
+        modifier = modifier.background(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    AppColors.SurfaceVariant,
+                    AppColors.ImagePlaceholder
+                )
             )
+        ),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
+        CircularProgressIndicator(
+            modifier = Modifier.size(AppDimens.Space24),
             color = AppColors.Primary,
-            fontWeight = FontWeight.SemiBold
+            strokeWidth = AppDimens.Space2
         )
     }
+}
+
+@Composable
+fun ProductImagePlaceholder(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.background(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    AppColors.SurfaceVariant,
+                    AppColors.ImagePlaceholder
+                )
+            )
+        ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Image,
+            contentDescription = null,
+            tint = AppColors.SecondaryText
+        )
+    }
+}
+
+private fun isLikelyImageUrl(url: String): Boolean {
+    val normalized = url.trim().lowercase()
+
+    if (normalized.isBlank()) return false
+
+    return normalized.startsWith("http://") ||
+            normalized.startsWith("https://") ||
+            normalized.startsWith("file://") ||
+            normalized.startsWith("content://")
 }

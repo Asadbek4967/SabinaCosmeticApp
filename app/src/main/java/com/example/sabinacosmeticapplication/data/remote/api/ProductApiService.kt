@@ -1,16 +1,30 @@
 package com.example.sabinacosmeticapplication.data.remote.api
 
-import com.example.sabinacosmeticapplication.data.remote.dto.ProductDto
+import com.example.sabinacosmeticapplication.data.remote.dto.ProductDetailDto
+import com.example.sabinacosmeticapplication.data.remote.dto.ProductsResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ProductApiService {
 
-    @GET("products")
-    suspend fun getAllProducts(): List<ProductDto>
+    @GET("api/products")
+    suspend fun getAllProducts(
+        @Query("search") search: String? = null,
+        @Query("categoryId") categoryId: String? = null,
+        @Query("featured") featured: Boolean? = null,
+        @Query("active") active: Boolean = true,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = DEFAULT_PAGE_SIZE
+    ): ProductsResponseDto
 
-    @GET("products/{id}")
+    @GET("api/products/{id}")
     suspend fun getProductById(
-        @Path("id") id: String
-    ): ProductDto
+        @Path("id") id: String,
+        @Query("active") active: Boolean = true
+    ): ProductDetailDto
+
+    companion object {
+        const val DEFAULT_PAGE_SIZE = 50
+    }
 }

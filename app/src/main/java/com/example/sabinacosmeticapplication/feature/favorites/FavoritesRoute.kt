@@ -1,4 +1,14 @@
 package com.example.sabinacosmeticapplication.feature.favorites
 
-class FavoritesRoute {
+import androidx.compose.runtime.Composable
+
+@Composable
+fun FavoritesRoute(
+    onBackClick: () -> Unit,
+    onProductClick: (String) -> Unit
+) {
+    FavoritesScreen(
+        onBackClick = onBackClick,
+        onProductClick = onProductClick
+    )
 }

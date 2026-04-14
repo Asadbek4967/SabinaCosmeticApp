@@ -1,4 +1,4 @@
-package com.example.sabinacosmeticapplication.ui.components.common
+package com.example.sabinacosmeticapplication.ui.components.commerce
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

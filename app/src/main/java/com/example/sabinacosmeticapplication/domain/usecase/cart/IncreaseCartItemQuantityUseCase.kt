@@ -7,6 +7,10 @@ class IncreaseCartItemQuantityUseCase @Inject constructor(
     private val repository: CartRepository
 ) {
     suspend operator fun invoke(productId: String) {
-        repository.increaseQuantity(productId)
+        val currentItems = repository.getCartItemsOnce()
+        val targetItem = currentItems.firstOrNull { it.productId == productId } ?: return
+
+        val newQuantity = targetItem.quantity + 1
+        repository.updateQuantity(productId, newQuantity)
     }
 }
