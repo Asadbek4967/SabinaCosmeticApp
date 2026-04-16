@@ -1,8 +1,8 @@
 package com.example.sabinacosmeticapplication.data.mapper
 
 import com.example.sabinacosmeticapplication.data.model.Product
+import com.example.sabinacosmeticapplication.data.model.ProductVideo
 import com.example.sabinacosmeticapplication.data.remote.dto.ProductDetailDto
-import java.util.Locale
 import kotlin.math.roundToInt
 
 fun ProductDetailDto.toProduct(): Product {
@@ -28,6 +28,7 @@ fun ProductDetailDto.toProduct(): Product {
         .orEmpty()
         .trim()
         .ifBlank { description.orEmpty().trim() }
+        .ifBlank { shortDescription.orEmpty().trim() }
         .ifBlank {
             "$safeBrand $safeTitle is a carefully selected beauty product for daily use."
         }
@@ -35,14 +36,19 @@ fun ProductDetailDto.toProduct(): Product {
     val currentPriceValue = price?.roundToInt()?.coerceAtLeast(0) ?: 0
     val oldPriceValue = oldPrice?.roundToInt()?.takeIf { it > 0 }
 
-    val resolvedImageUrl = listOf(
-        thumbnailUrl,
-        imageUrl,
-        images.orEmpty().firstOrNull { it.isThumbnail == true }?.imageUrl,
-        images.orEmpty().firstOrNull()?.imageUrl,
-    ).map { it.orEmpty().trim() }
-        .firstOrNull { it.isNotBlank() }
-        .orEmpty()
+    val galleryImages = buildList {
+        thumbnailUrl?.trim()?.takeIf { it.isNotBlank() }?.let { add(it) }
+        imageUrl?.trim()?.takeIf { it.isNotBlank() && !contains(it) }?.let { add(it) }
+
+        images
+            .sortedBy { it.sortOrder ?: Int.MAX_VALUE }
+            .mapNotNull { it.imageUrl?.trim()?.takeIf(String::isNotBlank) }
+            .forEach { image ->
+                if (!contains(image)) add(image)
+            }
+    }
+
+    val resolvedImageUrl = galleryImages.firstOrNull().orEmpty()
 
     val resolvedDiscountLabel = if (
         oldPriceValue != null &&
@@ -56,6 +62,22 @@ fun ProductDetailDto.toProduct(): Product {
         null
     }
 
+    val mappedVideos = videos
+        .sortedBy { it.sortOrder ?: Int.MAX_VALUE }
+        .mapNotNull { video ->
+            val safeUrl = video.videoUrl.orEmpty().trim()
+            if (safeUrl.isBlank()) {
+                null
+            } else {
+                ProductVideo(
+                    id = video.id.orEmpty(),
+                    title = video.title.orEmpty().ifBlank { "Product video" },
+                    videoUrl = safeUrl,
+                    thumbnailUrl = video.thumbnailUrl?.trim()?.takeIf { it.isNotBlank() }
+                )
+            }
+        }
+
     return Product(
         id = safeId,
         title = safeTitle,
@@ -67,50 +89,16 @@ fun ProductDetailDto.toProduct(): Product {
         discountLabel = resolvedDiscountLabel,
         imageUrl = resolvedImageUrl,
         imageRes = null,
-        description = buildDetailDescription(
-            description = resolvedDescription,
-            benefits = localized?.benefits,
-            howToUse = localized?.howToUse,
-            ingredients = localized?.ingredients,
-            warning = localized?.warning,
-            skinType = skinType,
-        ),
+        description = resolvedDescription,
         isFlashSale = resolvedDiscountLabel != null,
         isBestSeller = isBestSeller == true || isFeatured == true,
+
+        benefits = localized?.benefits?.trim()?.takeIf { it.isNotBlank() },
+        howToUse = localized?.howToUse?.trim()?.takeIf { it.isNotBlank() },
+        ingredients = localized?.ingredients?.trim()?.takeIf { it.isNotBlank() },
+        warning = localized?.warning?.trim()?.takeIf { it.isNotBlank() },
+        skinType = skinType?.trim()?.takeIf { it.isNotBlank() },
+        galleryImages = galleryImages,
+        videos = mappedVideos,
     )
-}
-
-private fun buildDetailDescription(
-    description: String,
-    benefits: String?,
-    howToUse: String?,
-    ingredients: String?,
-    warning: String?,
-    skinType: String?,
-): String {
-    val sections = buildList {
-        add(description)
-
-        skinType?.trim()?.takeIf { it.isNotBlank() }?.let {
-            add("Skin type: $it")
-        }
-
-        benefits?.trim()?.takeIf { it.isNotBlank() }?.let {
-            add("Benefits: $it")
-        }
-
-        howToUse?.trim()?.takeIf { it.isNotBlank() }?.let {
-            add("How to use: $it")
-        }
-
-        ingredients?.trim()?.takeIf { it.isNotBlank() }?.let {
-            add("Ingredients: $it")
-        }
-
-        warning?.trim()?.takeIf { it.isNotBlank() }?.let {
-            add("Warning: $it")
-        }
-    }
-
-    return sections.joinToString(separator = "\n\n")
 }

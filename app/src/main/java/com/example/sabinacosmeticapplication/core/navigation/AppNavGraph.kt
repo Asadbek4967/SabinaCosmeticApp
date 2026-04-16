@@ -345,6 +345,9 @@ fun AppNavGraph(
                     snackbarHostState = snackbarHostState,
                     onOrderPlaced = {
                         navController.navigate(AppDestinations.ORDER_SUCCESS) {
+                            popUpTo(AppDestinations.CHECKOUT) {
+                                inclusive = true
+                            }
                             launchSingleTop = true
                         }
                     },
@@ -354,7 +357,13 @@ fun AppNavGraph(
             composable(AppDestinations.ORDER_SUCCESS) {
                 OrderSuccessScreen(
                     onContinueShopping = {
-                        navController.navigateToBottomBarRoute(AppDestinations.HOME)
+                        navController.navigate(AppDestinations.HOME) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                 )
             }

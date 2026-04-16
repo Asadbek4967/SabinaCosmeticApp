@@ -64,7 +64,9 @@ class CategoryProductsViewModel @Inject constructor(
                     errorMessage = "Category id is missing.",
                     categoryKey = categoryId,
                     categoryDisplayName = profile.displayName.ifBlank { "Category" },
-                    categorySubtitle = profile.subtitle,
+                    categorySubtitle = profile.subtitle.ifBlank {
+                        "Explore curated products for your beauty routine."
+                    },
                 )
             }
             return
@@ -111,7 +113,8 @@ class CategoryProductsViewModel @Inject constructor(
                         products = emptyList(),
                         fallbackProducts = emptyList(),
                         isFallbackMode = false,
-                        errorMessage = throwable.message ?: "Failed to load category products.",
+                        errorMessage = throwable.message
+                            ?: "Failed to load category products.",
                         categoryKey = categoryId,
                         categoryDisplayName = profile.displayName.ifBlank { "Category" },
                         categorySubtitle = profile.subtitle.ifBlank {

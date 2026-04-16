@@ -59,11 +59,7 @@ fun CategoryProductsScreen(
         topBar = {
             AppTopBar(
                 title = displayCategoryName,
-                subtitle = if (uiState.isLoading) {
-                    null
-                } else {
-                    "${visibleProducts.size} products"
-                },
+                subtitle = if (uiState.isLoading) null else "${visibleProducts.size} products",
                 onBackClick = onBackClick,
             )
         },

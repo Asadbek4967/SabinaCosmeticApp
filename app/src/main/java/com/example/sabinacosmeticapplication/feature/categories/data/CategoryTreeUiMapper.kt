@@ -8,8 +8,10 @@ object CategoryTreeUiMapper {
 
     fun mapTree(categories: List<CategoryTreeDto>): List<AppCategory> {
         return categories
-            .sortedWith(compareBy<CategoryTreeDto> { it.sortOrder ?: Int.MAX_VALUE }
-                .thenBy { it.nameEn.orEmpty() })
+            .sortedWith(
+                compareBy<CategoryTreeDto> { it.sortOrder ?: Int.MAX_VALUE }
+                    .thenBy { it.nameEn.orEmpty() }
+            )
             .map { it.toAppCategory() }
     }
 
@@ -17,13 +19,20 @@ object CategoryTreeUiMapper {
         val safeName = resolveDisplayName()
         val safeSlug = slug?.trim().orEmpty().ifBlank { safeName.toSlug() }
 
+        val mappedChildren = children
+            .sortedWith(
+                compareBy<CategoryTreeDto> { it.sortOrder ?: Int.MAX_VALUE }
+                    .thenBy { it.nameEn.orEmpty() }
+            )
+            .map { it.toAppCategory() }
+
         return AppCategory(
             id = id.orEmpty(),
             title = safeName,
             subtitle = resolveSubtitle(
                 slug = safeSlug,
                 name = safeName,
-                hasChildren = children.isNotEmpty(),
+                hasChildren = mappedChildren.isNotEmpty(),
             ),
             iconName = resolveIconName(
                 slug = safeSlug,
@@ -31,10 +40,7 @@ object CategoryTreeUiMapper {
             ),
             slug = safeSlug,
             parentId = parentId,
-            children = children
-                .sortedWith(compareBy<CategoryTreeDto> { it.sortOrder ?: Int.MAX_VALUE }
-                    .thenBy { it.nameEn.orEmpty() })
-                .map { it.toAppCategory() },
+            children = mappedChildren,
         )
     }
 

@@ -26,6 +26,8 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.LocalOffer
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -312,6 +314,10 @@ private fun CategoryDetailPanel(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
+            CategoryHeroCard(rootCategory = rootCategory)
+        }
+
+        item {
             Text(
                 text = rootCategory.title,
                 style = MaterialTheme.typography.headlineSmall,
@@ -327,6 +333,10 @@ private fun CategoryDetailPanel(
 
         item {
             QuickTagRow(rootCategory = rootCategory)
+        }
+
+        item {
+            SectionInfoCard(rootCategory = rootCategory)
         }
 
         items(
@@ -347,6 +357,88 @@ private fun CategoryDetailPanel(
                 )
             }
         }
+
+        item {
+            BottomCategoryHint()
+        }
+    }
+}
+
+@Composable
+private fun CategoryHeroCard(
+    rootCategory: AppCategory,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 18.dp)
+        ) {
+            Text(
+                text = rootCategory.title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Discover curated essentials, trending picks and everyday care products in this category.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.86f)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HeroBadge(
+                    text = "Top picks",
+                    icon = Icons.Outlined.StarOutline
+                )
+                HeroBadge(
+                    text = "New arrivals",
+                    icon = Icons.Outlined.LocalOffer
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroBadge(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -358,7 +450,7 @@ private fun QuickTagRow(
         add("Best")
         add("New")
         add("Popular")
-        addAll(rootCategory.children.take(3).map { it.title })
+        addAll(rootCategory.children.take(4).map { it.title })
     }.distinct()
 
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -374,6 +466,38 @@ private fun QuickTagRow(
                     fontWeight = FontWeight.Medium,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SectionInfoCard(
+    rootCategory: AppCategory,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+        ) {
+            Text(
+                text = "Explore ${rootCategory.title}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Open a subcategory to see products fetched from backend in the correct place.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -541,6 +665,36 @@ private fun ExpandableCategoryCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun BottomCategoryHint() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            Text(
+                text = "Need more products?",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Frontend is now ready. To make this screen feel rich, backend should provide more categories and many more products.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

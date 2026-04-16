@@ -3,7 +3,6 @@ package com.example.sabinacosmeticapplication.feature.productdetail.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,11 +40,11 @@ fun ProductDetailContent(
 ) {
     val product = uiState.product ?: return
     val displayProduct = remember(product) { product.toUiProduct() }
-    val displayCategory = displayProduct.category.trim()
+
+    val displayCategory = displayProduct.safeCategory
     val safeBrand = displayProduct.safeBrand
     val safeTitle = displayProduct.safeTitle
-    val safeDescription = displayProduct.safeDescription
-    val safeProductId = displayProduct.id.trim().ifBlank { "-" }
+    val safeProductId = displayProduct.safeId.ifBlank { "-" }
 
     Column(
         modifier = modifier
@@ -64,7 +62,7 @@ fun ProductDetailContent(
         ) {
             ProductDetailHeader(
                 category = displayCategory,
-                imageUrl = displayProduct.imageUrl,
+                imageUrl = displayProduct.resolvedImageUrl.orEmpty(),
                 imageRes = displayProduct.imageRes,
                 title = safeTitle
             )
@@ -97,11 +95,8 @@ fun ProductDetailContent(
                 subtitle = "About this product"
             ) {
                 ProductDetailDescription(
-                    description = safeDescription,
-                    isExpanded = uiState.isDescriptionExpanded,
-                    onToggle = {
-                        onAction(ProductDetailUiAction.ToggleDescriptionClick)
-                    }
+                    product = displayProduct,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
@@ -180,10 +175,9 @@ private fun ProductBadgeRow(
     isFlashSale: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    androidx.compose.foundation.layout.Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space8),
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space8)
     ) {
         if (category.isNotBlank()) {
             ProductBadge(

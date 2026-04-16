@@ -1,11 +1,13 @@
 package com.example.sabinacosmeticapplication.feature.productdetail.components
 
-import androidx.compose.animation.animateContentSize
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -13,63 +15,171 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.AppShapes
 
-private const val CollapsedDescriptionLines = 4
-
 @Composable
 fun ProductDetailDescription(
-    description: String,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier
+    product: Product,
+    modifier: Modifier = Modifier,
 ) {
-    val displayDescription = description.trim().ifBlank { "No description available." }
-    val shouldShowToggle = description.trim().isNotBlank()
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+    ) {
+        DetailSectionCard(
+            title = "Description",
+            content = product.description
+        )
+
+        product.skinType?.let {
+            DetailSectionCard(
+                title = "Skin type",
+                content = it
+            )
+        }
+
+        product.benefits?.let {
+            DetailSectionCard(
+                title = "Benefits",
+                content = it
+            )
+        }
+
+        product.howToUse?.let {
+            DetailSectionCard(
+                title = "How to use",
+                content = it
+            )
+        }
+
+        product.ingredients?.let {
+            DetailSectionCard(
+                title = "Ingredients",
+                content = it
+            )
+        }
+
+        product.warning?.let {
+            DetailSectionCard(
+                title = "Warning",
+                content = it
+            )
+        }
+
+        if (product.videos.isNotEmpty()) {
+            ProductVideoSection(product = product)
+        }
+    }
+}
+
+@Composable
+private fun DetailSectionCard(
+    title: String,
+    content: String,
+) {
+    if (content.isBlank()) return
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = AppShapes.Large,
+        modifier = Modifier.fillMaxWidth(),
+        shape = AppShapes.ExtraLarge,
         colors = CardDefaults.cardColors(
             containerColor = AppColors.Surface
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = AppDimens.Space2
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.CardElevation)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .animateContentSize()
-                .padding(AppDimens.Space16),
+            modifier = Modifier.padding(AppDimens.Space16)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Primary
+            )
+
+            Spacer(modifier = Modifier.height(AppDimens.Space8))
+
+            Text(
+                text = content,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.Primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductVideoSection(
+    product: Product,
+) {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = AppShapes.ExtraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = AppColors.Surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = AppDimens.CardElevation)
+    ) {
+        Column(
+            modifier = Modifier.padding(AppDimens.Space16),
             verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
         ) {
             Text(
-                text = displayDescription,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = AppColors.SecondaryText
-                ),
-                maxLines = if (isExpanded) Int.MAX_VALUE else CollapsedDescriptionLines,
-                overflow = TextOverflow.Ellipsis
+                text = "Videos",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Primary
             )
 
-            if (shouldShowToggle) {
-                TextButton(
-                    onClick = onToggle,
-                    contentPadding = PaddingValues(0.dp)
+            product.videos.forEach { video ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = AppShapes.Large,
+                    colors = CardDefaults.cardColors(
+                        containerColor = AppColors.Background
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Text(
-                        text = if (isExpanded) "Show less" else "Read more",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            color = AppColors.Primary,
-                            fontWeight = FontWeight.SemiBold
+                    Column(
+                        modifier = Modifier.padding(AppDimens.Space14)
+                    ) {
+                        Text(
+                            text = video.title.ifBlank { "Product video" },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AppColors.Primary
                         )
-                    )
+
+                        Spacer(modifier = Modifier.height(AppDimens.Space6))
+
+                        Text(
+                            text = video.videoUrl,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.SecondaryText
+                        )
+
+                        Spacer(modifier = Modifier.height(AppDimens.Space8))
+
+                        TextButton(
+                            onClick = {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse(video.videoUrl)
+                                )
+                                context.startActivity(intent)
+                            }
+                        ) {
+                            Text("Open video")
+                        }
+                    }
                 }
             }
         }

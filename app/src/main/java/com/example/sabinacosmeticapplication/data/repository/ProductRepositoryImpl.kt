@@ -28,14 +28,12 @@ class ProductRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getProductsByCategory(category: String): List<Product> {
-        val normalizedCategory = category.trim()
-        if (normalizedCategory.isBlank()) return emptyList()
+    override suspend fun getProductsByCategory(categoryId: String): List<Product> {
+        val safeCategoryId = categoryId.trim()
+        if (safeCategoryId.isBlank()) return emptyList()
 
         return safeRemoteCall {
-            fetchProducts().filter { product ->
-                product.matchesCategory(normalizedCategory)
-            }
+            fetchProducts(categoryId = safeCategoryId)
         }
     }
 
@@ -44,40 +42,23 @@ class ProductRepositoryImpl @Inject constructor(
         if (normalizedQuery.isBlank()) return emptyList()
 
         return safeRemoteCall {
-            val remoteSearchResults = fetchProducts(search = normalizedQuery)
-
-            if (remoteSearchResults.isNotEmpty()) {
-                remoteSearchResults
-            } else {
-                fetchProducts().filter { product ->
-                    product.matchesSearchQuery(normalizedQuery)
-                }
-            }
+            fetchProducts(search = normalizedQuery)
         }
     }
 
     private suspend fun fetchProducts(
-        search: String? = null
+        search: String? = null,
+        categoryId: String? = null
     ): List<Product> {
         return remoteDataSource.getAllProducts(
             search = search,
+            categoryId = categoryId,
             active = true,
             page = DEFAULT_FIRST_PAGE,
             limit = DEFAULT_PRODUCT_FETCH_LIMIT
         ).map { dto ->
             dto.toProduct()
         }
-    }
-
-    private fun Product.matchesCategory(category: String): Boolean {
-        return this.category.equals(category, ignoreCase = true)
-    }
-
-    private fun Product.matchesSearchQuery(query: String): Boolean {
-        return title.contains(query, ignoreCase = true) ||
-                category.contains(query, ignoreCase = true) ||
-                description.contains(query, ignoreCase = true) ||
-                brand.contains(query, ignoreCase = true)
     }
 
     private suspend inline fun <T> safeRemoteCall(

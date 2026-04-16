@@ -40,7 +40,11 @@ fun ProductImage(
     modifier: Modifier = Modifier
 ) {
     val displayImageUrl = remember(imageUrl) {
-        imageUrl.trim()
+        imageUrl
+            .trim()
+            .replace("\\", "/")
+            .removeSurrounding("\"")
+            .removeSurrounding("'")
     }
 
     val displayBadgeText = remember(badgeText) {
@@ -83,7 +87,11 @@ fun ProductCardImage(
     modifier: Modifier = Modifier
 ) {
     val displayImageUrl = remember(imageUrl) {
-        imageUrl.trim()
+        imageUrl
+            .trim()
+            .replace("\\", "/")
+            .removeSurrounding("\"")
+            .removeSurrounding("'")
     }
 
     val displayBadgeText = remember(badgeText) {
