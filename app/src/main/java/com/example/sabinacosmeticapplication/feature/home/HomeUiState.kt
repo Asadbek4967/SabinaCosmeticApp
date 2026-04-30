@@ -8,64 +8,63 @@ data class HomeUiState(
     val allProducts: List<Product> = emptyList(),
     val errorMessage: String? = null
 ) {
+
     private val uniqueProducts: List<Product>
         get() = allProducts.distinctBy { it.id }
 
     val banners: List<PromoBannerUi>
         get() = promoBanners
 
+    // 🔥 CATEGORY (emoji emas, iconName ishlatamiz)
     val categories: List<CategoryUi>
         get() = buildHomeCategories(uniqueProducts)
 
+    // 🔥 FEATURED
     val featuredProducts: List<Product>
-        get() {
-            val prioritized = uniqueProducts
-                .sortedWith(
-                    compareByDescending<Product> { it.isBestSeller }
-                        .thenByDescending { it.isFlashSale }
-                        .thenByDescending { it.priceValue }
-                )
+        get() = uniqueProducts
+            .sortedWith(
+                compareByDescending<Product> { it.isBestSeller }
+                    .thenByDescending { it.isFlashSale }
+                    .thenByDescending { it.priceValue }
+            )
+            .take(FEATURED_MAX_ITEMS)
 
-            return prioritized.take(FEATURED_MAX_ITEMS)
-        }
-
+    // 🔥 FLASH SALE
     val flashSaleProducts: List<Product>
         get() {
-            val excludedIds = featuredProducts.map { it.id }.toSet()
+            val excluded = featuredProducts.map { it.id }.toSet()
 
             return uniqueProducts
-                .filter { it.isFlashSale && it.id !in excludedIds }
+                .filter { it.isFlashSale && it.id !in excluded }
                 .take(FLASH_SALE_MAX_ITEMS)
         }
 
+    // 🔥 BEST SELLER
     val bestSellerProducts: List<Product>
         get() {
-            val excludedIds = (featuredProducts + flashSaleProducts)
+            val excluded = (featuredProducts + flashSaleProducts)
                 .map { it.id }
                 .toSet()
 
             return uniqueProducts
-                .filter { it.isBestSeller && it.id !in excludedIds }
+                .filter { it.isBestSeller && it.id !in excluded }
                 .take(BEST_SELLER_MAX_ITEMS)
         }
 
+    // 🔥 RECOMMENDED
     val recommendedProducts: List<Product>
         get() {
-            val excludedIds = (featuredProducts + flashSaleProducts + bestSellerProducts)
+            val excluded = (featuredProducts + flashSaleProducts + bestSellerProducts)
                 .map { it.id }
                 .toSet()
 
-            val remainder = uniqueProducts
-                .filterNot { it.id in excludedIds }
-
-            return remainder.take(RECOMMENDED_MAX_ITEMS)
+            return uniqueProducts
+                .filterNot { it.id in excluded }
+                .take(RECOMMENDED_MAX_ITEMS)
         }
 
     val hasProducts: Boolean
         get() = uniqueProducts.isNotEmpty()
-
-    val isEmptyData: Boolean
-        get() = uniqueProducts.isEmpty()
 
     val showContent: Boolean
         get() = !isLoading && errorMessage == null && hasProducts
@@ -74,7 +73,7 @@ data class HomeUiState(
         get() = !isLoading && !errorMessage.isNullOrBlank()
 
     val showEmpty: Boolean
-        get() = !isLoading && errorMessage == null && isEmptyData
+        get() = !isLoading && errorMessage == null && uniqueProducts.isEmpty()
 
     companion object {
         private const val FEATURED_MAX_ITEMS = 6
@@ -84,35 +83,39 @@ data class HomeUiState(
     }
 }
 
+// 🔥 BANNER
 data class PromoBannerUi(
     val title: String,
     val subtitle: String,
     val colors: List<Color>
 )
 
+// 🔥 CATEGORY (emoji olib tashladik)
 data class CategoryUi(
     val title: String,
-    val iconEmoji: String
+    val iconName: String
 )
 
+// 🔥 STATIC BANNER DATA
 private val promoBanners = listOf(
     PromoBannerUi(
         title = "Glow Essentials",
-        subtitle = "Refresh your skincare routine with trending Korean beauty picks.",
+        subtitle = "Trending Korean skincare for glowing skin.",
         colors = listOf(Color(0xFF4D6BFE), Color(0xFF7B8CFF))
     ),
     PromoBannerUi(
-        title = "Flash Beauty Sale",
-        subtitle = "Limited-time offers on your favorite products.",
+        title = "Flash Sale",
+        subtitle = "Limited-time beauty deals.",
         colors = listOf(Color(0xFFFF6B6B), Color(0xFFFF9F7A))
     ),
     PromoBannerUi(
-        title = "Best Seller Week",
-        subtitle = "Top-rated cosmetic products loved by customers.",
+        title = "Best Sellers",
+        subtitle = "Most loved products by customers.",
         colors = listOf(Color(0xFF7A5AF8), Color(0xFF9B8AFB))
     )
 )
 
+// 🔥 CATEGORY BUILD (iconName bilan)
 private fun buildHomeCategories(products: List<Product>): List<CategoryUi> {
     return products
         .map { it.category.trim() }
@@ -122,19 +125,22 @@ private fun buildHomeCategories(products: List<Product>): List<CategoryUi> {
         .map { category ->
             CategoryUi(
                 title = category,
-                iconEmoji = resolveCategoryEmoji(category)
+                iconName = resolveCategoryIconName(category)
             )
         }
 }
 
-private fun resolveCategoryEmoji(category: String): String {
-    return when (category.trim().lowercase()) {
-        "skin care", "skincare", "cleanser", "toner", "serum", "cream", "sunscreen", "mask pack", "eye & lip care" -> "🧴"
-        "hair care", "shampoo", "conditioner", "scalp care" -> "💧"
-        "sun care", "sunscreen" -> "☀️"
-        "makeup", "lip makeup", "base makeup", "eye makeup" -> "💄"
-        "body care", "body wash", "body lotion", "hand care", "foot care" -> "🫧"
-        "vitamins", "wellness", "probiotics", "collagen", "biotin" -> "✨"
-        else -> "🌿"
+// 🔥 ICON LOGIC (resolver bilan mos)
+private fun resolveCategoryIconName(category: String): String {
+    val key = category.lowercase()
+
+    return when {
+        key.contains("skin") || key.contains("face") -> "face"
+        key.contains("hair") -> "hair"
+        key.contains("makeup") -> "makeup"
+        key.contains("body") -> "body"
+        key.contains("sun") -> "sun"
+        key.contains("vitamin") -> "vitamin"
+        else -> "face"
     }
 }

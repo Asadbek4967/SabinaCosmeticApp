@@ -3,6 +3,7 @@ package com.example.sabinacosmeticapplication.data.mapper
 import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.data.model.ProductVideo
 import com.example.sabinacosmeticapplication.data.remote.dto.ProductDetailDto
+import java.util.Locale
 import kotlin.math.roundToInt
 
 fun ProductDetailDto.toProduct(): Product {
@@ -16,62 +17,58 @@ fun ProductDetailDto.toProduct(): Product {
 
     val safeBrand = brand.orEmpty().trim().ifBlank { "Unknown Brand" }
 
-    val resolvedCategory = category?.nameEn
-        ?.trim()
-        ?.ifBlank { null }
-        ?: category?.nameUz?.trim()?.ifBlank { null }
-        ?: category?.nameRu?.trim()?.ifBlank { null }
-        ?: category?.nameKo?.trim()?.ifBlank { null }
-        ?: "Skincare"
+    val resolvedCategory = category?.nameEn?.trim()?.takeIf { it.isNotBlank() }
+        ?: category?.nameUz?.trim()?.takeIf { it.isNotBlank() }
+        ?: category?.nameRu?.trim()?.takeIf { it.isNotBlank() }
+        ?: category?.nameKo?.trim()?.takeIf { it.isNotBlank() }
+        ?: "Cosmetic"
 
     val resolvedDescription = localized?.description
         .orEmpty()
         .trim()
         .ifBlank { description.orEmpty().trim() }
         .ifBlank { shortDescription.orEmpty().trim() }
-        .ifBlank {
-            "$safeBrand $safeTitle is a carefully selected beauty product for daily use."
-        }
+        .ifBlank { "$safeBrand $safeTitle is a carefully selected beauty product for daily use." }
 
     val currentPriceValue = price?.roundToInt()?.coerceAtLeast(0) ?: 0
     val oldPriceValue = oldPrice?.roundToInt()?.takeIf { it > 0 }
 
+    val mainImage = resolveDetailMainImage(
+        thumbnailUrl = thumbnailUrl,
+        imageUrl = imageUrl
+    )
+
     val galleryImages = buildList {
-        thumbnailUrl?.trim()?.takeIf { it.isNotBlank() }?.let { add(it) }
-        imageUrl?.trim()?.takeIf { it.isNotBlank() && !contains(it) }?.let { add(it) }
+        if (mainImage.isNotBlank()) add(mainImage)
 
         images
+            .orEmpty()
             .sortedBy { it.sortOrder ?: Int.MAX_VALUE }
-            .mapNotNull { it.imageUrl?.trim()?.takeIf(String::isNotBlank) }
-            .forEach { image ->
-                if (!contains(image)) add(image)
+            .mapNotNull { image ->
+                image.imageUrl?.trim()?.takeIf { url -> url.isNotBlank() }
+            }
+            .forEach { url ->
+                if (!contains(url)) add(url)
             }
     }
 
-    val resolvedImageUrl = galleryImages.firstOrNull().orEmpty()
-
-    val resolvedDiscountLabel = if (
-        oldPriceValue != null &&
-        oldPriceValue > currentPriceValue &&
-        currentPriceValue > 0
-    ) {
-        val percent = (((oldPriceValue - currentPriceValue).toDouble() / oldPriceValue) * 100)
-            .roundToInt()
-        if (percent > 0) "$percent% OFF" else null
-    } else {
-        null
-    }
+    val resolvedDiscountLabel = resolveDetailDiscountLabel(
+        currentPriceValue = currentPriceValue,
+        oldPriceValue = oldPriceValue
+    )
 
     val mappedVideos = videos
+        .orEmpty()
         .sortedBy { it.sortOrder ?: Int.MAX_VALUE }
         .mapNotNull { video ->
             val safeUrl = video.videoUrl.orEmpty().trim()
+
             if (safeUrl.isBlank()) {
                 null
             } else {
                 ProductVideo(
                     id = video.id.orEmpty(),
-                    title = video.title.orEmpty().ifBlank { "Product video" },
+                    title = video.title.orEmpty().trim().ifBlank { "Product video" },
                     videoUrl = safeUrl,
                     thumbnailUrl = video.thumbnailUrl?.trim()?.takeIf { it.isNotBlank() }
                 )
@@ -83,22 +80,53 @@ fun ProductDetailDto.toProduct(): Product {
         title = safeTitle,
         brand = safeBrand,
         category = resolvedCategory,
-        price = "₩" + "%,d".format(currentPriceValue),
+        price = currentPriceValue.toWonText(),
         priceValue = currentPriceValue,
-        oldPrice = oldPriceValue?.let { "₩" + "%,d".format(it) },
+        oldPrice = oldPriceValue?.toWonText(),
         discountLabel = resolvedDiscountLabel,
-        imageUrl = resolvedImageUrl,
+        imageUrl = galleryImages.firstOrNull().orEmpty(),
         imageRes = null,
         description = resolvedDescription,
         isFlashSale = resolvedDiscountLabel != null,
         isBestSeller = isBestSeller == true || isFeatured == true,
-
         benefits = localized?.benefits?.trim()?.takeIf { it.isNotBlank() },
         howToUse = localized?.howToUse?.trim()?.takeIf { it.isNotBlank() },
         ingredients = localized?.ingredients?.trim()?.takeIf { it.isNotBlank() },
         warning = localized?.warning?.trim()?.takeIf { it.isNotBlank() },
         skinType = skinType?.trim()?.takeIf { it.isNotBlank() },
         galleryImages = galleryImages,
-        videos = mappedVideos,
+        videos = mappedVideos
     )
+}
+
+private fun resolveDetailMainImage(
+    thumbnailUrl: String?,
+    imageUrl: String?
+): String {
+    return listOf(thumbnailUrl, imageUrl)
+        .firstOrNull { !it.isNullOrBlank() }
+        ?.trim()
+        .orEmpty()
+}
+
+private fun resolveDetailDiscountLabel(
+    currentPriceValue: Int,
+    oldPriceValue: Int?
+): String? {
+    if (
+        oldPriceValue != null &&
+        oldPriceValue > currentPriceValue &&
+        currentPriceValue > 0
+    ) {
+        val percent = (((oldPriceValue - currentPriceValue).toDouble() / oldPriceValue) * 100)
+            .roundToInt()
+
+        return if (percent > 0) "$percent% OFF" else null
+    }
+
+    return null
+}
+
+private fun Int.toWonText(): String {
+    return "₩" + "%,d".format(Locale.US, this)
 }

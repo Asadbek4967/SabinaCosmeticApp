@@ -10,7 +10,7 @@ import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 
 class ProductRepositoryImpl @Inject constructor(
-    private val remoteDataSource: ProductRemoteDataSource
+    private val remoteDataSource: ProductRemoteDataSource,
 ) : ProductRepository {
 
     override suspend fun getAllProducts(): List<Product> {
@@ -28,6 +28,20 @@ class ProductRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getRelatedProducts(id: String): List<Product> {
+        val safeId = id.trim()
+        if (safeId.isBlank()) return emptyList()
+
+        return safeRemoteCall {
+            remoteDataSource.getRelatedProducts(
+                id = safeId,
+                limit = DEFAULT_RELATED_LIMIT,
+            ).map { dto ->
+                dto.toProduct()
+            }
+        }
+    }
+
     override suspend fun getProductsByCategory(categoryId: String): List<Product> {
         val safeCategoryId = categoryId.trim()
         if (safeCategoryId.isBlank()) return emptyList()
@@ -38,31 +52,31 @@ class ProductRepositoryImpl @Inject constructor(
     }
 
     override suspend fun searchProducts(query: String): List<Product> {
-        val normalizedQuery = query.trim()
-        if (normalizedQuery.isBlank()) return emptyList()
+        val safeQuery = query.trim()
+        if (safeQuery.isBlank()) return emptyList()
 
         return safeRemoteCall {
-            fetchProducts(search = normalizedQuery)
+            fetchProducts(search = safeQuery)
         }
     }
 
     private suspend fun fetchProducts(
         search: String? = null,
-        categoryId: String? = null
+        categoryId: String? = null,
     ): List<Product> {
         return remoteDataSource.getAllProducts(
             search = search,
             categoryId = categoryId,
             active = true,
             page = DEFAULT_FIRST_PAGE,
-            limit = DEFAULT_PRODUCT_FETCH_LIMIT
+            limit = DEFAULT_PRODUCT_FETCH_LIMIT,
         ).map { dto ->
             dto.toProduct()
         }
     }
 
     private suspend inline fun <T> safeRemoteCall(
-        crossinline block: suspend () -> T
+        crossinline block: suspend () -> T,
     ): T {
         return try {
             block()
@@ -70,20 +84,20 @@ class ProductRepositoryImpl @Inject constructor(
             throw e
         } catch (e: IOException) {
             throw IOException(
-                "Please check your internet connection and try again.",
-                e
+                "Internet connection error. Please check your network and try again.",
+                e,
             )
         } catch (e: HttpException) {
             throw IllegalStateException(
-                "Server error ${e.code()}. Unable to load product data right now.",
-                e
+                "Server error ${e.code()}. Unable to load product data.",
+                e,
             )
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
             throw IllegalStateException(
-                e.message ?: "Unexpected error occurred while loading product data.",
-                e
+                e.message ?: "Unexpected product error.",
+                e,
             )
         }
     }
@@ -91,5 +105,6 @@ class ProductRepositoryImpl @Inject constructor(
     private companion object {
         const val DEFAULT_FIRST_PAGE = 1
         const val DEFAULT_PRODUCT_FETCH_LIMIT = 100
+        const val DEFAULT_RELATED_LIMIT = 20
     }
 }

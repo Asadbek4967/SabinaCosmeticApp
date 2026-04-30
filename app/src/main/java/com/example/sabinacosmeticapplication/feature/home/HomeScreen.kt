@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -26,7 +27,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalMall
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,16 +51,24 @@ import androidx.compose.ui.unit.dp
 import com.example.sabinacosmeticapplication.data.mapper.CategoryMapper
 import com.example.sabinacosmeticapplication.data.mapper.toUiProduct
 import com.example.sabinacosmeticapplication.data.model.Product
+import com.example.sabinacosmeticapplication.ui.components.category.CategoryVisualResolver
 import com.example.sabinacosmeticapplication.ui.components.common.AppSectionTitle
 import com.example.sabinacosmeticapplication.ui.components.product.VerticalProductCard
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 import com.example.sabinacosmeticapplication.ui.theme.AppShapes
 
-private val BannerFallbackStart = Color(0xFF2563EB)
-private val BannerFallbackEnd = Color(0xFF60A5FA)
+private val BannerBlueStart = Color(0xFF1677FF)
+private val BannerBlueEnd = Color(0xFF65A9FF)
+private val BannerPinkStart = Color(0xFFFF4D7D)
+private val BannerPinkEnd = Color(0xFFFF9F7A)
+private val BannerPurpleStart = Color(0xFF7C3AED)
+private val BannerPurpleEnd = Color(0xFFA78BFA)
 private val IndicatorInactive = Color(0xFFD7DCE5)
-private val HomeTopSafeSpacing = 12.dp
+private val CoupangBlue = Color(0xFF1677FF)
+private val SaleRed = Color(0xFFFF3B30)
+private val CouponBlueSoft = Color(0xFFEAF2FF)
+private val HomeTopSafeSpacing = 10.dp
 
 @Composable
 fun HomeScreen(
@@ -66,29 +77,21 @@ fun HomeScreen(
     onAction: (HomeUiAction) -> Unit
 ) {
     when {
-        uiState.isLoading -> {
-            HomeLoadingContent(padding = padding)
-        }
+        uiState.isLoading -> HomeLoadingContent(padding)
 
-        uiState.showError -> {
-            HomeErrorContent(
-                padding = padding,
-                message = uiState.errorMessage ?: "Something went wrong",
-                onRetryClick = { onAction(HomeUiAction.RetryClick) }
-            )
-        }
+        uiState.showError -> HomeErrorContent(
+            padding = padding,
+            message = uiState.errorMessage ?: "Something went wrong",
+            onRetryClick = { onAction(HomeUiAction.RetryClick) }
+        )
 
-        uiState.showEmpty -> {
-            HomeEmptyContent(padding = padding)
-        }
+        uiState.showEmpty -> HomeEmptyContent(padding)
 
-        else -> {
-            HomeContent(
-                padding = padding,
-                uiState = uiState,
-                onAction = onAction
-            )
-        }
+        else -> HomeContent(
+            padding = padding,
+            uiState = uiState,
+            onAction = onAction
+        )
     }
 }
 
@@ -103,10 +106,10 @@ private fun HomeContent(
             .fillMaxSize()
             .background(AppColors.Background)
             .statusBarsPadding(),
-        verticalArrangement = Arrangement.spacedBy(AppDimens.HomeSectionSpacing),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
         contentPadding = PaddingValues(
             top = HomeTopSafeSpacing,
-            bottom = padding.calculateBottomPadding() + AppDimens.Space24
+            bottom = padding.calculateBottomPadding() + 24.dp
         )
     ) {
         item {
@@ -118,27 +121,26 @@ private fun HomeContent(
 
         if (uiState.categories.isNotEmpty()) {
             item {
-                CategorySection(
+                CoupangCategoryShortcutGrid(
                     categories = uiState.categories,
-                    onCategoryClick = { category ->
-                        onAction(HomeUiAction.CategoryClick(category))
-                    },
-                    onSeeAllClick = {
-                        onAction(HomeUiAction.CategoriesSeeAllClick)
+                    onCategoryClick = { title ->
+                        onAction(HomeUiAction.CategoryClick(title))
                     }
                 )
             }
         }
 
+        item {
+            CouponPackCard()
+        }
+
         if (uiState.featuredProducts.isNotEmpty()) {
             item {
                 ProductCarouselSection(
-                    title = "Featured picks",
-                    subtitle = "Curated beauty essentials worth exploring",
+                    title = "이 상품 놓치지 마세요!",
+                    subtitle = "Sabina Cosmetic 추천 상품",
                     products = uiState.featuredProducts,
-                    onProductClick = { productId ->
-                        onAction(HomeUiAction.ProductClick(productId))
-                    }
+                    onProductClick = { onAction(HomeUiAction.ProductClick(it)) }
                 )
             }
         }
@@ -147,11 +149,10 @@ private fun HomeContent(
             item {
                 ProductCarouselSection(
                     title = "Flash Sale",
-                    subtitle = "Limited-time offers selected for you",
+                    subtitle = "오늘만 특별 할인",
                     products = uiState.flashSaleProducts,
-                    onProductClick = { productId ->
-                        onAction(HomeUiAction.ProductClick(productId))
-                    }
+                    onProductClick = { onAction(HomeUiAction.ProductClick(it)) },
+                    titleColor = SaleRed
                 )
             }
         }
@@ -160,11 +161,9 @@ private fun HomeContent(
             item {
                 ProductCarouselSection(
                     title = "Best Sellers",
-                    subtitle = "Most loved by customers",
+                    subtitle = "고객들이 많이 찾는 상품",
                     products = uiState.bestSellerProducts,
-                    onProductClick = { productId ->
-                        onAction(HomeUiAction.ProductClick(productId))
-                    }
+                    onProductClick = { onAction(HomeUiAction.ProductClick(it)) }
                 )
             }
         }
@@ -173,164 +172,15 @@ private fun HomeContent(
             item {
                 ProductGridSection(
                     title = "Recommended for you",
-                    subtitle = "Picked for your beauty routine",
+                    subtitle = "당신을 위한 추천 상품",
                     products = uiState.recommendedProducts,
-                    onProductClick = { productId ->
-                        onAction(HomeUiAction.ProductClick(productId))
-                    }
+                    onProductClick = { onAction(HomeUiAction.ProductClick(it)) }
                 )
             }
         }
 
         item {
-            Spacer(
-                modifier = Modifier.windowInsetsBottomHeight(
-                    WindowInsets.safeDrawing
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeLoadingContent(
-    padding: PaddingValues
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.Background)
-            .statusBarsPadding()
-            .padding(bottom = padding.calculateBottomPadding()),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
-        ) {
-            CircularProgressIndicator(
-                color = AppColors.Primary
-            )
-
-            Text(
-                text = "Loading home...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.SecondaryText
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeErrorContent(
-    padding: PaddingValues,
-    message: String,
-    onRetryClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.Background)
-            .statusBarsPadding()
-            .padding(
-                start = AppDimens.ScreenHorizontal,
-                end = AppDimens.ScreenHorizontal,
-                top = HomeTopSafeSpacing,
-                bottom = padding.calculateBottomPadding()
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        StateCard(
-            title = "Unable to load home",
-            message = message.ifBlank { "Something went wrong. Please try again." },
-            actionLabel = "Try again",
-            onActionClick = onRetryClick,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun HomeEmptyContent(
-    padding: PaddingValues
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.Background)
-            .statusBarsPadding()
-            .padding(
-                start = AppDimens.ScreenHorizontal,
-                end = AppDimens.ScreenHorizontal,
-                top = HomeTopSafeSpacing,
-                bottom = padding.calculateBottomPadding()
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        StateCard(
-            title = "No products available",
-            message = "Please check back later for new arrivals and offers.",
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun StateCard(
-    title: String,
-    message: String,
-    actionLabel: String? = null,
-    onActionClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = AppShapes.ExtraLarge,
-        color = AppColors.Surface,
-        shadowElevation = AppDimens.CardElevation
-    ) {
-        Column(
-            modifier = Modifier.padding(
-                horizontal = AppDimens.Space20,
-                vertical = AppDimens.Space24
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = AppColors.Primary,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.SecondaryText,
-                textAlign = TextAlign.Center
-            )
-
-            if (!actionLabel.isNullOrBlank() && onActionClick != null) {
-                Surface(
-                    modifier = Modifier.clickable(onClick = onActionClick),
-                    shape = AppShapes.Pill,
-                    color = AppColors.Primary
-                ) {
-                    Text(
-                        text = actionLabel,
-                        modifier = Modifier.padding(
-                            horizontal = AppDimens.Space16,
-                            vertical = AppDimens.Space10
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = AppColors.OnPrimary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.safeDrawing))
         }
     }
 }
@@ -341,14 +191,22 @@ private fun HomeTopSection(
     onSearchClick: () -> Unit
 ) {
     val safeBanners = remember(banners) {
-        if (banners.isNotEmpty()) {
-            banners
-        } else {
+        banners.ifEmpty {
             listOf(
                 PromoBannerUi(
-                    title = "Sabina Picks",
-                    subtitle = "Discover curated Korean beauty essentials for everyday care.",
-                    colors = listOf(BannerFallbackStart, BannerFallbackEnd)
+                    title = "Sabina Beauty Week",
+                    subtitle = "Korean skincare products up to 25% OFF",
+                    colors = listOf(BannerBlueStart, BannerBlueEnd)
+                ),
+                PromoBannerUi(
+                    title = "Glow Essentials",
+                    subtitle = "Serum, toner, cream and sunscreen deals",
+                    colors = listOf(BannerPinkStart, BannerPinkEnd)
+                ),
+                PromoBannerUi(
+                    title = "Best Seller Picks",
+                    subtitle = "Most loved cosmetic products",
+                    colors = listOf(BannerPurpleStart, BannerPurpleEnd)
                 )
             )
         }
@@ -357,24 +215,22 @@ private fun HomeTopSection(
     val pagerState = rememberPagerState(pageCount = { safeBanners.size })
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = AppDimens.ScreenHorizontal,
-                vertical = AppDimens.Space14
-            ),
-        verticalArrangement = Arrangement.spacedBy(AppDimens.Space16)
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        HomeHeader()
-        SearchBarFake(onClick = onSearchClick)
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            HomeHeader()
+            SearchBarFake(onClick = onSearchClick)
+        }
 
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
-            PromoBanner(
-                banner = safeBanners[page]
-            )
+            PromoBanner(banner = safeBanners[page])
         }
 
         BannerIndicatorRow(
@@ -387,41 +243,34 @@ private fun HomeTopSection(
 @Composable
 private fun HomeHeader() {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
+        Text(
+            text = "Sabina Cosmetic",
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space4)
-        ) {
-            Text(
-                text = "Sabina Cosmetic",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = AppColors.Primary
-            )
-
-            Text(
-                text = "Korean beauty marketplace",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.SecondaryText
-            )
-        }
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.ExtraBold
+            ),
+            color = AppColors.Primary
+        )
 
         Surface(
             shape = CircleShape,
             color = AppColors.Surface,
-            shadowElevation = AppDimens.CardElevation
+            shadowElevation = 4.dp
         ) {
             Box(
-                modifier = Modifier.padding(AppDimens.Space10),
+                modifier = Modifier.padding(11.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Outlined.NotificationsNone,
                     contentDescription = "Notifications",
-                    tint = AppColors.IconTint
+                    tint = AppColors.IconTint,
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
@@ -436,29 +285,27 @@ private fun SearchBarFake(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = AppShapes.Large,
+        shape = RoundedCornerShape(999.dp),
         color = AppColors.Surface,
-        shadowElevation = AppDimens.CardElevation
+        shadowElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = AppDimens.Space14,
-                    vertical = AppDimens.Space14
-                ),
+                .padding(horizontal = 16.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Outlined.Search,
                 contentDescription = "Search",
-                tint = AppColors.SecondaryText
+                tint = AppColors.Primary,
+                modifier = Modifier.size(22.dp)
             )
 
-            Spacer(modifier = Modifier.width(AppDimens.Space10))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Text(
-                text = "Search skincare, serum, cream...",
+                text = "Sabina Cosmetic에서 검색하세요!",
                 color = AppColors.SecondaryText,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
@@ -472,57 +319,64 @@ private fun SearchBarFake(
 private fun PromoBanner(
     banner: PromoBannerUi
 ) {
-    val bannerColors = if (banner.colors.isNotEmpty()) {
-        banner.colors
-    } else {
-        listOf(BannerFallbackStart, BannerFallbackEnd)
+    val bannerColors = banner.colors.ifEmpty {
+        listOf(BannerBlueStart, BannerBlueEnd)
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(AppShapes.ExtraLarge)
-            .background(
-                brush = Brush.horizontalGradient(
-                    colors = bannerColors
-                )
-            )
-            .padding(AppDimens.Space20)
+            .height(170.dp)
+            .background(Brush.horizontalGradient(bannerColors))
+            .padding(horizontal = 24.dp, vertical = 22.dp)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space8)
+            modifier = Modifier.align(Alignment.CenterStart),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Surface(
+                shape = AppShapes.Pill,
+                color = Color.White.copy(alpha = 0.22f)
+            ) {
+                Text(
+                    text = "최대 25% OFF",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Text(
                 text = banner.title,
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.ExtraBold
+                ),
+                maxLines = 2
             )
 
             Text(
                 text = banner.subtitle,
                 color = Color.White.copy(alpha = 0.92f),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2
             )
+        }
 
-            Spacer(modifier = Modifier.height(AppDimens.Space4))
-
-            Box(
+        Surface(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            shape = CircleShape,
+            color = Color.White.copy(alpha = 0.18f)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.LocalMall,
+                contentDescription = null,
+                tint = Color.White,
                 modifier = Modifier
-                    .clip(AppShapes.Pill)
-                    .background(Color.White.copy(alpha = 0.18f))
-                    .padding(
-                        horizontal = AppDimens.Space14,
-                        vertical = AppDimens.Space8
-                    )
-            ) {
-                Text(
-                    text = "Shop now",
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                    .padding(18.dp)
+                    .size(34.dp)
+            )
         }
     }
 }
@@ -539,156 +393,159 @@ private fun BannerIndicatorRow(
         repeat(pageCount) { index ->
             Box(
                 modifier = Modifier
-                    .padding(horizontal = AppDimens.Space4)
-                    .height(AppDimens.HomeBannerIndicatorHeight)
-                    .width(
-                        if (currentPage == index) {
-                            AppDimens.HomeBannerIndicatorActiveWidth
-                        } else {
-                            AppDimens.HomeBannerIndicatorInactiveWidth
-                        }
-                    )
+                    .padding(horizontal = 3.dp)
+                    .height(5.dp)
+                    .width(if (currentPage == index) 18.dp else 5.dp)
                     .clip(AppShapes.Pill)
-                    .background(
-                        if (currentPage == index) AppColors.Accent else IndicatorInactive
-                    )
+                    .background(if (currentPage == index) CoupangBlue else IndicatorInactive)
             )
         }
     }
 }
 
 @Composable
-private fun CategorySection(
+private fun CoupangCategoryShortcutGrid(
     categories: List<CategoryUi>,
-    onCategoryClick: (String) -> Unit,
-    onSeeAllClick: () -> Unit
+    onCategoryClick: (String) -> Unit
 ) {
-    val rows = remember(categories) { categories.chunked(3) }
+    val visibleCategories = remember(categories) {
+        categories.take(10)
+    }
+
+    val firstRow = visibleCategories.take(5)
+    val secondRow = visibleCategories.drop(5).take(5)
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AppColors.Surface)
+            .padding(vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        SectionHeader(
-            title = "Categories",
-            subtitle = "Browse by type",
-            actionLabel = "See all",
-            onActionClick = onSeeAllClick
+        CategoryShortcutRow(
+            categories = firstRow,
+            onCategoryClick = onCategoryClick
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AppDimens.ScreenHorizontal),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
-        ) {
-            rows.forEach { rowCategories ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12)
-                ) {
-                    rowCategories.forEach { category ->
-                        CategoryGridItem(
-                            category = category,
-                            onClick = { onCategoryClick(category.title) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    repeat(3 - rowCategories.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
+        if (secondRow.isNotEmpty()) {
+            CategoryShortcutRow(
+                categories = secondRow,
+                onCategoryClick = onCategoryClick
+            )
         }
     }
 }
 
 @Composable
-private fun SectionHeader(
-    title: String,
-    subtitle: String,
-    actionLabel: String? = null,
-    onActionClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+private fun CategoryShortcutRow(
+    categories: List<CategoryUi>,
+    onCategoryClick: (String) -> Unit
 ) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AppDimens.ScreenHorizontal),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space4)
-        ) {
-            Text(
-                text = title,
-                color = AppColors.Primary,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Text(
-                text = subtitle,
-                color = AppColors.SecondaryText,
-                style = MaterialTheme.typography.bodySmall
+        categories.forEach { category ->
+            CoupangCategoryShortcutItem(
+                category = category,
+                onClick = { onCategoryClick(category.title) }
             )
         }
 
-        if (!actionLabel.isNullOrBlank() && onActionClick != null) {
-            Text(
-                text = actionLabel,
-                color = AppColors.Accent,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = onActionClick)
-            )
+        repeat(5 - categories.size) {
+            Spacer(modifier = Modifier.width(58.dp))
         }
     }
 }
 
 @Composable
-private fun CategoryGridItem(
+private fun CoupangCategoryShortcutItem(
     category: CategoryUi,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    Surface(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = AppShapes.Large,
-        color = AppColors.Surface,
-        tonalElevation = 0.dp,
-        shadowElevation = AppDimens.CardElevation
+    val visual = remember(category.iconName, category.title) {
+        CategoryVisualResolver.resolve(
+            iconName = category.iconName,
+            title = category.title
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .width(64.dp)
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(7.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = AppDimens.Space8,
-                    vertical = AppDimens.Space14
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space8)
+        Surface(
+            modifier = Modifier.size(52.dp),
+            shape = RoundedCornerShape(17.dp),
+            color = Color.Transparent,
+            shadowElevation = 4.dp
         ) {
             Box(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .background(AppColors.SurfaceVariant)
-                    .padding(AppDimens.Space12),
+                    .fillMaxSize()
+                    .background(visual.backgroundBrush),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = category.iconEmoji)
+                Icon(
+                    imageVector = visual.icon,
+                    contentDescription = category.title,
+                    tint = visual.contentColor,
+                    modifier = Modifier.size(29.dp)
+                )
             }
+        }
 
+        Text(
+            text = CategoryMapper.toDisplayName(category.title),
+            color = AppColors.Primary,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun CouponPackCard() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = CouponBlueSoft
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Text(
-                text = CategoryMapper.toDisplayName(category.title),
-                color = AppColors.Primary,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                minLines = 2,
-                maxLines = 2
+                text = "[미사용] 15,000원 쿠폰팩이 있습니다.",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.Primary
             )
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = CoupangBlue
+            ) {
+                Text(
+                    text = "확인",
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -698,23 +555,24 @@ private fun ProductCarouselSection(
     title: String,
     subtitle: String,
     products: List<Product>,
-    onProductClick: (String) -> Unit
+    onProductClick: (String) -> Unit,
+    titleColor: Color = AppColors.Primary
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         AppSectionTitle(
             title = title,
             subtitle = subtitle,
-            titleColor = AppColors.Primary,
+            titleColor = titleColor,
             subtitleColor = AppColors.SecondaryText,
-            modifier = Modifier.padding(horizontal = AppDimens.ScreenHorizontal)
+            modifier = Modifier.padding(horizontal = 18.dp)
         )
 
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = AppDimens.ScreenHorizontal),
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+            contentPadding = PaddingValues(horizontal = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(
                 items = products,
@@ -745,14 +603,14 @@ private fun ProductGridSection(
     }
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(AppDimens.Space12)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         AppSectionTitle(
             title = title,
             subtitle = subtitle,
             titleColor = AppColors.Primary,
             subtitleColor = AppColors.SecondaryText,
-            modifier = Modifier.padding(horizontal = AppDimens.ScreenHorizontal)
+            modifier = Modifier.padding(horizontal = 18.dp)
         )
 
         LazyVerticalGrid(
@@ -760,9 +618,9 @@ private fun ProductGridSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(AppDimens.HomeRecommendedGridHeight)
-                .padding(horizontal = AppDimens.ScreenHorizontal),
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space12),
-            verticalArrangement = Arrangement.spacedBy(AppDimens.Space12),
+                .padding(horizontal = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             userScrollEnabled = false
         ) {
             items(
@@ -773,6 +631,141 @@ private fun ProductGridSection(
                     product = product.toUiProduct(),
                     onClick = { onProductClick(product.id) }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeLoadingContent(
+    padding: PaddingValues
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.Background)
+            .statusBarsPadding()
+            .padding(bottom = padding.calculateBottomPadding()),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CircularProgressIndicator(color = AppColors.Primary)
+
+            Text(
+                text = "Loading home...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.SecondaryText
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeErrorContent(
+    padding: PaddingValues,
+    message: String,
+    onRetryClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.Background)
+            .statusBarsPadding()
+            .padding(
+                start = 18.dp,
+                end = 18.dp,
+                top = HomeTopSafeSpacing,
+                bottom = padding.calculateBottomPadding()
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        StateCard(
+            title = "Unable to load home",
+            message = message.ifBlank { "Something went wrong. Please try again." },
+            actionLabel = "Try again",
+            onActionClick = onRetryClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun HomeEmptyContent(
+    padding: PaddingValues
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.Background)
+            .statusBarsPadding()
+            .padding(
+                start = 18.dp,
+                end = 18.dp,
+                top = HomeTopSafeSpacing,
+                bottom = padding.calculateBottomPadding()
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        StateCard(
+            title = "No products available",
+            message = "Please check back later for new arrivals and offers.",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun StateCard(
+    title: String,
+    message: String,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = AppShapes.ExtraLarge,
+        color = AppColors.Surface,
+        shadowElevation = AppDimens.CardElevation
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = AppColors.Primary,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.SecondaryText,
+                textAlign = TextAlign.Center
+            )
+
+            if (!actionLabel.isNullOrBlank() && onActionClick != null) {
+                Surface(
+                    modifier = Modifier.clickable(onClick = onActionClick),
+                    shape = AppShapes.Pill,
+                    color = AppColors.Primary
+                ) {
+                    Text(
+                        text = actionLabel,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = AppColors.OnPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }
