@@ -1,66 +1,127 @@
 package com.example.sabinacosmeticapplication.feature.categoryproducts
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.sabinacosmeticapplication.domain.usecase.product.GetProductsByCategoryUseCase
+import com.example.sabinacosmeticapplication.domain.usecase.category.GetCategoryProductsUseCase
+import com.example.sabinacosmeticapplication.feature.categoryproducts.data.CategoryProductResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class CategoryProductsViewModel @Inject constructor(
+    private val getCategoryProductsUseCase: GetCategoryProductsUseCase,
     savedStateHandle: SavedStateHandle,
-    private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase
 ) : ViewModel() {
 
-    private val categoryArg = savedStateHandle.get<String>("category").orEmpty()
+    private val categoryId: String =
+        savedStateHandle.get<String>("categoryId").orEmpty()
 
-    private val decodedCategory = URLDecoder.decode(
-        categoryArg,
-        StandardCharsets.UTF_8.toString()
+    private val categoryTitle: String =
+        savedStateHandle.get<String>("categoryTitle").orEmpty()
+
+    private val profile = CategoryProductResolver.resolve(
+        routeCategory = categoryTitle.ifBlank { categoryId }
     )
 
     private val _uiState = MutableStateFlow(
         CategoryProductsUiState(
-            categoryName = decodedCategory,
-            products = emptyList(),
             isLoading = true,
-            errorMessage = null
-        )
+            categoryKey = categoryId,
+            categoryDisplayName = profile.displayName.ifBlank { "Category" },
+            categorySubtitle = profile.subtitle.ifBlank {
+                "Explore curated products for your beauty routine."
+            },
+        ),
     )
     val uiState: StateFlow<CategoryProductsUiState> = _uiState.asStateFlow()
 
     init {
-        loadCategoryProducts()
+        loadProducts()
     }
 
-    fun loadCategoryProducts() {
+    fun reload() {
+        loadProducts()
+    }
+
+    private fun loadProducts() {
+        Log.d("CategoryProductsVM", "categoryId = $categoryId")
+        Log.d("CategoryProductsVM", "categoryTitle = $categoryTitle")
+
+        if (categoryId.isBlank()) {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    products = emptyList(),
+                    fallbackProducts = emptyList(),
+                    isFallbackMode = false,
+                    errorMessage = "Category id is missing.",
+                    categoryKey = categoryId,
+                    categoryDisplayName = profile.displayName.ifBlank { "Category" },
+                    categorySubtitle = profile.subtitle.ifBlank {
+                        "Explore curated products for your beauty routine."
+                    },
+                )
+            }
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                errorMessage = null
-            )
+            _uiState.update {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    categoryKey = categoryId,
+                    categoryDisplayName = profile.displayName.ifBlank { "Category" },
+                    categorySubtitle = profile.subtitle.ifBlank {
+                        "Explore curated products for your beauty routine."
+                    },
+                )
+            }
 
             runCatching {
-                getProductsByCategoryUseCase(decodedCategory)
+                getCategoryProductsUseCase(categoryId)
             }.onSuccess { products ->
-                _uiState.value = _uiState.value.copy(
-                    products = products,
-                    isLoading = false,
-                    errorMessage = null
-                )
+                Log.d("CategoryProductsVM", "Loaded products count = ${products.size}")
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        products = products,
+                        fallbackProducts = emptyList(),
+                        isFallbackMode = false,
+                        errorMessage = null,
+                        categoryKey = categoryId,
+                        categoryDisplayName = profile.displayName.ifBlank { "Category" },
+                        categorySubtitle = profile.subtitle.ifBlank {
+                            "Explore curated products for your beauty routine."
+                        },
+                    )
+                }
             }.onFailure { throwable ->
-                _uiState.value = _uiState.value.copy(
-                    products = emptyList(),
-                    isLoading = false,
-                    errorMessage = throwable.message ?: "Failed to load category products"
-                )
+                Log.e("CategoryProductsVM", "Failed to load category products", throwable)
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        products = emptyList(),
+                        fallbackProducts = emptyList(),
+                        isFallbackMode = false,
+                        errorMessage = throwable.message
+                            ?: "Failed to load category products.",
+                        categoryKey = categoryId,
+                        categoryDisplayName = profile.displayName.ifBlank { "Category" },
+                        categorySubtitle = profile.subtitle.ifBlank {
+                            "Explore curated products for your beauty routine."
+                        },
+                    )
+                }
             }
         }
     }

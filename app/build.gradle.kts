@@ -16,7 +16,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -27,30 +27,53 @@ android {
         buildConfigField(
             "String",
             "BASE_URL",
-            "\"https://69c19bcd085e1a9fae417833.mockapi.io/api/v1/\""
+            "\"http://10.0.2.2:3000/api/\""
+        )
+
+        buildConfigField(
+            "String",
+            "IMAGE_BASE_URL",
+            "\"http://10.0.2.2:3000\""
         )
     }
 
     buildTypes {
         debug {
-            buildConfigField(
-                "String",
-                "BASE_URL",
-                "\"https://69c19bcd085e1a9fae417833.mockapi.io/api/v1/\""
-            )
-        }
-
-        release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
 
             buildConfigField(
                 "String",
                 "BASE_URL",
                 "\"http://10.0.2.2:3000/api/\""
+            )
+
+            buildConfigField(
+                "String",
+                "IMAGE_BASE_URL",
+                "\"http://10.0.2.2:3000\""
+            )
+        }
+
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
+            // Keyin haqiqiy production domain bilan almashtirasan
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"https://api.sabinacosmetic.com/api/\""
+            )
+
+            buildConfigField(
+                "String",
+                "IMAGE_BASE_URL",
+                "\"https://api.sabinacosmetic.com\""
             )
         }
     }

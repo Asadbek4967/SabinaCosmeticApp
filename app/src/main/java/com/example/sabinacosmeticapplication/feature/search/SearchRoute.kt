@@ -42,6 +42,9 @@ fun SearchRoute(
         onPopularKeywordClick = { keyword ->
             viewModel.onAction(SearchUiAction.PopularKeywordClicked(keyword))
         },
+        onRecentSearchClick = { keyword ->
+            viewModel.onAction(SearchUiAction.RecentSearchClicked(keyword))
+        },
         onRemoveRecentSearch = { keyword ->
             viewModel.onAction(SearchUiAction.RecentSearchRemoved(keyword))
         },

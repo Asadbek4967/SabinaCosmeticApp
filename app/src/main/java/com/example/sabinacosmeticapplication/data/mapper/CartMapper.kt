@@ -8,9 +8,9 @@ fun CartEntity.toCartItem(): CartItem {
         productId = productId,
         title = title,
         brand = brand,
-        price = price,
-        priceValue = priceValue,
+        category = category,
         imageUrl = imageUrl,
+        price = price,
         quantity = quantity
     )
 }
@@ -20,9 +20,9 @@ fun CartItem.toCartEntity(): CartEntity {
         productId = productId,
         title = title,
         brand = brand,
-        price = price,
-        priceValue = priceValue,
+        category = category,
         imageUrl = imageUrl,
+        price = price,
         quantity = quantity
     )
 }

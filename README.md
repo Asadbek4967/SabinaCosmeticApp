@@ -1,103 +1,184 @@
-# Sabina Cosmetic Application
+# 💄 Sabina Cosmetic Application
 
-A modern Android cosmetic shopping application built with **Kotlin** and **Jetpack Compose**, designed with a clean architecture approach and focused on a smooth mobile shopping experience.
+A modern Android e-commerce application built with **Jetpack Compose**, designed for browsing, searching, and purchasing cosmetic products with a clean and scalable architecture.
 
-## Overview
+---
 
-Sabina Cosmetic Application is a beauty shopping app prototype that allows users to browse cosmetic products, view product details, search products, explore categories, and manage a shopping cart.
+## 🚀 Features
 
-The project has been developed with a strong focus on:
+### 🏠 Home & Discovery
 
-- modern Android development practices
-- clean and scalable architecture
-- reusable UI components
-- API integration
-- local cart persistence
-- professional project structure for future expansion
+* Product listing with categorized browsing
+* Promotional banners and featured sections
+* Best sellers and recommended products
 
-## Features Implemented
+### 🔍 Search
 
-### Product Browsing
-- Home screen with promotional banners
-- Recommended product section
-- Product category display
-- Product cards with brand, title, category, price, and product image
+* Real-time product search
+* Filtered results with responsive UI
 
-### Product Detail
-- Dedicated product detail screen
-- Product image rendering
-- Category badge and product status display
-- Price section
-- Product description and product information section
-- Add to Cart action
+### 📦 Product Details
 
-### Search
-- Search screen with query handling
-- Product filtering based on keyword
-- Search result display
+* Detailed product information
+* Add to cart functionality
+* Favorite (wishlist) support
 
-### Categories
-- Category browsing screen
-- Category-based product filtering
-- Category navigation flow
+### ❤️ Favorites (Wishlist)
 
-### Cart
-- Add products to cart
-- Increase and decrease item quantity
-- Remove item from cart
-- Undo removed item
-- Cart subtotal and total price display
-- Empty cart state
-- Local cart persistence using Room database
+* Save and manage favorite products
+* Quick add to cart
+* Persistent local storage
 
-## Architecture
+### 🛒 Cart System
 
-This project follows a layered and scalable architecture:
+* Add/remove items
+* Quantity management
+* Dynamic total price calculation
+* Undo actions via Snackbar
 
-- **feature** layer for presentation/UI
-- **domain** layer for repository contracts and use cases
-- **data** layer for remote, local, mapper, and repository implementations
-- **di** layer for dependency injection modules
-- **core/ui** shared reusable components and design system
+### 💳 Checkout Flow
 
-### Main Technologies
-- **Kotlin**
-- **Jetpack Compose**
-- **Hilt**
-- **Retrofit**
-- **Room**
-- **Coil**
-- **Coroutines**
-- **StateFlow**
-- **Navigation Compose**
+* Delivery address input
+* Payment method selection
+* Order summary (subtotal, shipping, total)
+* Place order functionality
 
-## Project Structure
+### 📑 Orders
 
-```text
-app/
- ┣ data/
- ┃ ┣ local/
- ┃ ┣ remote/
- ┃ ┣ mapper/
- ┃ ┣ model/
- ┃ ┗ repository/
- ┣ domain/
- ┃ ┣ repository/
- ┃ ┗ usecase/
- ┣ feature/
- ┃ ┣ home/
- ┃ ┣ categories/
- ┃ ┣ categoryproducts/
- ┃ ┣ productdetail/
- ┃ ┣ search/
- ┃ ┣ cart/
- ┃ ┗ my/
- ┣ di/
- ┣ navigation/
- ┣ ui/
- ┃ ┗ components/
- ┗ core/
+* Orders list with history
+* Order detail view
+* Multi-item order support
+* Status tracking (Placed)
+
+---
+
+## 🧠 Architecture
+
+The app follows a **Clean Architecture-inspired structure**:
+
+```
+data/
+ ├── local/
+ │   ├── dao/
+ │   ├── entity/
+ │   ├── relation/
+ │   └── room/
+ ├── mapper/
+ └── repository/
+
+domain/
+ ├── repository/
+ └── usecase/
+
+feature/
+ ├── home/
+ ├── search/
+ ├── productdetail/
+ ├── favorites/
+ ├── cart/
+ └── orders/
+
+ui/
+ └── components/
+
+di/
+ └── dependency injection modules
+```
+
+---
+
+## 🗄️ Local Database (Room)
+
+* Cart persistence
+* Favorites persistence
+* Orders with relational structure:
+
+    * `OrderEntity`
+    * `OrderItemEntity`
+    * `OrderWithItems`
+
+Supports:
+
+* Multi-item orders
+* Transaction-safe queries
+* Structured data mapping
+
+---
+
+## 🔄 Data Flow
+
+```
+UI → ViewModel → Repository → DAO (Room) → Database
+```
+
+State is managed using:
+
+* `StateFlow`
+* `UiState` pattern
+
+---
+
+## 🎨 UI & Design
+
+* Built with **Jetpack Compose**
+* Material 3 design principles
+* Reusable UI components
+* Responsive layouts
+* Clean spacing and hierarchy
+
+---
+
+## ⚙️ Tech Stack
+
+* Kotlin
+* Jetpack Compose
+* Room Database
+* Hilt (Dependency Injection)
+* Coroutines & Flow
+
+---
+
+## 📌 Current Status
+
+The application has reached a **fully functional prototype stage**:
+
+✅ Core e-commerce flow implemented
+✅ Local persistence working
+✅ Multi-screen navigation complete
+✅ Order system (end-to-end) functional
+
+---
+
+## 🔜 Future Improvements
+
+* UI/UX polishing (spacing, typography, design system)
+* Currency localization (₩ support)
+* Shipping logic (dynamic rules)
+* Error handling & loading states
+* Offline support
+* Backend integration (API)
+* Authentication system
+* Payment integration
+
+---
+
+## 📷 Screens
+
+* Home
+* Product Detail
+* Cart
+* Checkout
+* Orders
+* Order Detail
+
+---
+
+## 👨‍💻 Author
 
 **Asadbek Matyaqubov**
 
-Android Developer
+---
+
+## 📄 License
+
+This project is for educational and portfolio purposes.

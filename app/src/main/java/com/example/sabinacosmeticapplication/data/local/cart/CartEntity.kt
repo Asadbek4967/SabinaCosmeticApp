@@ -9,8 +9,9 @@ data class CartEntity(
     val productId: String,
     val title: String,
     val brand: String,
-    val price: String,
-    val priceValue: Int,
+    val category: String,
     val imageUrl: String,
-    val quantity: Int
+    val price: Int,
+    val quantity: Int,
+    val createdAt: Long = System.currentTimeMillis()
 )

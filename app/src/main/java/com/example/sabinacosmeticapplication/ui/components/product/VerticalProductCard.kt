@@ -2,20 +2,16 @@ package com.example.sabinacosmeticapplication.ui.components.product
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import com.example.sabinacosmeticapplication.data.mapper.CategoryMapper
 import com.example.sabinacosmeticapplication.data.model.Product
 import com.example.sabinacosmeticapplication.ui.theme.AppColors
 import com.example.sabinacosmeticapplication.ui.theme.AppDimens
@@ -24,14 +20,39 @@ import com.example.sabinacosmeticapplication.ui.theme.AppShapes
 @Composable
 fun VerticalProductCard(
     product: Product,
-    onClick: () -> Unit,
+    onClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val displayProductId = remember(product.safeId) {
+        product.safeId
+    }
+
+    val displayCategory = remember(product.safeCategory) {
+        CategoryMapper.toDisplayName(product.safeCategory)
+    }
+
+    val displayImageUrl = remember(product.resolvedImageUrl) {
+        product.resolvedImageUrl.orEmpty()
+    }
+
+    val displayDescription = remember(product.safeDescription) {
+        product.safeDescription
+            .takeIf { it.isNotBlank() && it != "No description available." }
+    }
+
+    val imageBadge = remember(product.primaryBadge, displayCategory) {
+        product.primaryBadge ?: displayCategory
+    }
+
+    val priceBadge = remember(product.secondaryBadge, product.discountLabel) {
+        product.secondaryBadge ?: product.discountLabel
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = AppShapes.Large,
+            .clickable { onClick(displayProductId) },
+        shape = AppShapes.ExtraLarge,
         colors = CardDefaults.cardColors(
             containerColor = AppColors.Surface
         ),
@@ -40,57 +61,43 @@ fun VerticalProductCard(
         )
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.padding(AppDimens.Space12),
+            verticalArrangement = Arrangement.spacedBy(AppDimens.Space10)
         ) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.TopStart
-            ) {
-                ProductImage(
-                    imageUrl = product.imageUrl,
-                    imageRes = product.imageRes,
-                    contentDescription = product.title,
-                    modifier = Modifier.fillMaxWidth(),
-                    size = AppDimens.ProductImageLarge,
-                    badgeText = product.category
-                )
-            }
+            ProductCardImage(
+                imageUrl = displayImageUrl,
+                imageRes = product.imageRes,
+                contentDescription = product.safeTitle,
+                badgeText = imageBadge
+            )
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = AppDimens.ProductCardContentHorizontal,
-                        vertical = AppDimens.ProductCardContentVertical
-                    )
-                    .heightIn(min = AppDimens.VerticalProductCardContentMinHeight),
-                verticalArrangement = Arrangement.spacedBy(AppDimens.ProductCardContentSpacing)
+                    .heightIn(min = AppDimens.HorizontalProductCardContentMinHeight),
+                verticalArrangement = Arrangement.spacedBy(AppDimens.Space8)
             ) {
                 ProductBrandText(
-                    brand = product.brand
+                    brand = product.safeBrand
                 )
 
-                Text(
-                    text = product.title,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        color = AppColors.Primary,
-                        fontWeight = FontWeight.SemiBold
-                    ),
+                ProductTitleText(
+                    title = product.safeTitle,
                     maxLines = 2,
-                    minLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    minLines = 2
                 )
 
-                if (product.category.isNotBlank()) {
-                    ProductBadge(
-                        text = product.category
+                if (displayDescription != null) {
+                    ProductDescriptionText(
+                        description = displayDescription,
+                        maxLines = 2
                     )
                 }
 
                 ProductPriceBlock(
-                    price = product.price,
-                    oldPrice = product.oldPrice,
-                    discountLabel = product.discountLabel
+                    price = product.formattedPrice,
+                    oldPrice = product.formattedOldPrice,
+                    discountLabel = priceBadge
                 )
 
                 ProductStatusBadge(

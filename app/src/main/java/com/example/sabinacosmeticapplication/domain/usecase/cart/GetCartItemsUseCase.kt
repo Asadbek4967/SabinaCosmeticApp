@@ -9,6 +9,6 @@ class GetCartItemsUseCase @Inject constructor(
     private val repository: CartRepository
 ) {
     operator fun invoke(): Flow<List<CartItem>> {
-        return repository.cartItems
+        return repository.observeCartItems()
     }
 }

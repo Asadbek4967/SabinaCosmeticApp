@@ -11,7 +11,7 @@ fun CategoryProductsRoute(
     padding: PaddingValues,
     onBackClick: () -> Unit,
     onProductClick: (String) -> Unit,
-    viewModel: CategoryProductsViewModel = hiltViewModel()
+    viewModel: CategoryProductsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -19,6 +19,7 @@ fun CategoryProductsRoute(
         padding = padding,
         uiState = uiState,
         onBackClick = onBackClick,
-        onProductClick = onProductClick
+        onProductClick = onProductClick,
+        onRetryClick = viewModel::reload,
     )
 }

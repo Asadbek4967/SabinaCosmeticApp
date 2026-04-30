@@ -2,15 +2,10 @@ package com.example.sabinacosmeticapplication.ui.components.product
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.example.sabinacosmeticapplication.ui.theme.AppDimens
 
 @Composable
 fun ProductInfoBlock(
@@ -21,43 +16,35 @@ fun ProductInfoBlock(
     titleColor: Color,
     brandColor: Color,
     accentColor: Color,
-    maxTitleLines: Int = 2
+    maxTitleLines: Int = 2,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AppDimens.Space6)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = titleColor,
-            maxLines = maxTitleLines,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Text(
+        ProductSupportingText(
             text = brand,
-            style = MaterialTheme.typography.bodyMedium,
             color = brandColor
         )
 
+        ProductTitleText(
+            title = title,
+            maxLines = maxTitleLines
+        )
+
         if (!category.isNullOrBlank()) {
-            Text(
+            ProductBadge(
                 text = category,
-                style = MaterialTheme.typography.bodySmall,
-                color = accentColor,
-                fontWeight = FontWeight.SemiBold
+                backgroundColor = accentColor.copy(alpha = 0.10f),
+                contentColor = accentColor
             )
         }
 
         if (!priceText.isNullOrBlank()) {
-            Spacer(modifier = androidx.compose.ui.Modifier.height(2.dp))
-
-            Text(
-                text = priceText,
-                style = MaterialTheme.typography.titleMedium,
-                color = accentColor,
-                fontWeight = FontWeight.Bold
+            ProductAccentPriceText(
+                priceText = priceText,
+                color = accentColor
             )
         }
     }
