@@ -172,16 +172,7 @@ private fun CategoryCard(
                     color = AppColors.SecondaryText,
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                //Yangi ko'd qo'shdim
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = AppColors.Primary,
-                    modifier = Modifier.padding(top = 14.dp)
-                )
 
-
-                //todo men ozgarish qoshdim men asadbek
 
 
             }
