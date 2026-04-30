@@ -174,6 +174,8 @@ private fun CategoryCard(
                 )
 
 
+                //todo men ozgarish qoshdim men asadbek
+
             }
         }
     }
