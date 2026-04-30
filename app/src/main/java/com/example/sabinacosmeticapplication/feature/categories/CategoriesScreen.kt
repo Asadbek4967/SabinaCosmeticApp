@@ -153,6 +153,27 @@ private fun CategoryCard(
                     color = AppColors.SecondaryText,
                     modifier = Modifier.padding(top = 4.dp)
                 )
+
+                Text(
+                    text = item.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.SecondaryText,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+
+
+
+///ozgarish
+
+                Text(
+                    text = item.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.SecondaryText,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+
             }
         }
     }
